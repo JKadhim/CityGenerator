@@ -69,7 +69,7 @@ public class DistanceCulling : MonoBehaviour
         }
 
         // Calculate the number of chunks around the camera within the rendering range
-        int chunkCount = (int)(this.range / (AbstractMap.BLOCK_SIZE * this.cullingData.ChunkSize));
+        int chunkCount = (int)(this.range / (Map.BLOCK_SIZE * this.cullingData.ChunkSize));
 
         // Loop through the chunks surrounding the camera
         for (int x = this.chunkAddress.x - chunkCount; x <= this.chunkAddress.x + chunkCount; x++)

@@ -57,7 +57,7 @@ public class ModuleData : ScriptableObject, ISerializationCallbackReceiver
         // Log the number of removed impossible neighbours
         Debug.Log("Removed " + count + " impossible neighbours.");
 
-        // Clear progress bar and mark scene as dirty
+        // ClearMap progress bar and mark scene as dirty
         EditorUtility.ClearProgressBar();
         EditorUtility.SetDirty(this);
         AssetDatabase.SaveAssets();
@@ -95,7 +95,7 @@ public class ModuleData : ScriptableObject, ISerializationCallbackReceiver
         for (int i = 0; i < prefabsLocal.Length; i++)
         {
             var prefab = prefabsLocal[i];
-            // Initialize excluded neighbours for each face
+            // InitializeMap excluded neighbours for each face
             for (int face = 0; face < 4; face++)
             {
                 if (prefab.Faces[face].excludedNeighbours == null)
@@ -130,14 +130,14 @@ public class ModuleData : ScriptableObject, ISerializationCallbackReceiver
             module.possibleNeighbours = new ModuleSet[4];
             for (int direction = 0; direction < 4; direction++)
             {
-                var face = scenePrefab[module].Faces[Orientations.Rotate(direction, module.rotation)];
+                var face = scenePrefab[module].Faces[Directions.Rotate(direction, module.rotation)];
                 module.possibleNeighbours[direction] = new ModuleSet(modulesLocal
                     .Where(neighbor => module.Fits(direction, neighbor)
                         && (!respectNeigbourExclusions || (
                             !face.excludedNeighbours.Contains(scenePrefab[neighbor])
-                            && !scenePrefab[neighbor].Faces[Orientations.Rotate((direction + 2) % 4, neighbor.rotation)].excludedNeighbours.Contains(scenePrefab[module]))
-                            && (!face.enforceWalkableNeighbor || scenePrefab[neighbor].Faces[Orientations.Rotate((direction + 2) % 4, neighbor.rotation)].walkable)
-                            && (face.walkable || !scenePrefab[neighbor].Faces[Orientations.Rotate((direction + 2) % 4, neighbor.rotation)].enforceWalkableNeighbor))
+                            && !scenePrefab[neighbor].Faces[Directions.Rotate((direction + 2) % 4, neighbor.rotation)].excludedNeighbours.Contains(scenePrefab[module]))
+                            && (!face.enforceWalkableNeighbor || scenePrefab[neighbor].Faces[Directions.Rotate((direction + 2) % 4, neighbor.rotation)].walkable)
+                            && (face.walkable || !scenePrefab[neighbor].Faces[Directions.Rotate((direction + 2) % 4, neighbor.rotation)].enforceWalkableNeighbor))
                     ));
             }
 
@@ -145,7 +145,7 @@ public class ModuleData : ScriptableObject, ISerializationCallbackReceiver
             module.possibleNeighboursArray = module.possibleNeighbours.Select(ms => ms.ToArray()).ToArray();
         }
         Debug.Log("exit");
-        // Clear progress bar
+        // ClearMap progress bar
         EditorUtility.ClearProgressBar();
 
         // Set modules array and mark scene as dirty

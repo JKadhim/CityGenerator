@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-public class InfiniteMap : AbstractMap
+public class InfiniteMap : Map
 {
     private readonly Dictionary<Vector3Int, Slot> slots;
 
@@ -24,7 +24,7 @@ public class InfiniteMap : AbstractMap
         // Check if module data is available
         if (ModuleData.current == null || ModuleData.current.Length == 0)
         {
-            throw new InvalidOperationException("Module data was not available, please create module data first.");
+            throw new InvalidOperationException("Module data deos not exist");
         }
     }
 
@@ -76,7 +76,7 @@ public class InfiniteMap : AbstractMap
             switch (constraint.direction)
             {
                 case BoundaryConstraint.ConstraintDirection.Horizontal:
-                    directions = Orientations.Directions; break;
+                    directions = Directions.PossibleDirections; break;
             }
 
             // Apply constraints based on the mode

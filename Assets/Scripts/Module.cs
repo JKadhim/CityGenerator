@@ -36,8 +36,8 @@ public class Module
     {
         int otherDirection = (direction + 2) % 4;
 
-        var f1 = this.prefab.Faces[Orientations.Rotate(direction, this.rotation)] as ModulePrefab.HorizontalFaceDetails;
-        var f2 = module.prefab.Faces[Orientations.Rotate(otherDirection, module.rotation)] as ModulePrefab.HorizontalFaceDetails;
+        var f1 = this.prefab.Faces[Directions.Rotate(direction, this.rotation)] as ModulePrefab.HorizontalFaceDetails;
+        var f2 = module.prefab.Faces[Directions.Rotate(otherDirection, module.rotation)] as ModulePrefab.HorizontalFaceDetails;
         return f1.connector == f2.connector && (f1.symmetric || f1.flipped != f2.flipped);
     }
 
@@ -51,7 +51,7 @@ public class Module
     // Gets the face details of the module for a specified direction
     public ModulePrefab.FaceDetails GetFace(int direction)
     {
-        return this.prefab.Faces[Orientations.Rotate(direction, this.rotation)];
+        return this.prefab.Faces[Directions.Rotate(direction, this.rotation)];
     }
 
     // Overrides the ToString method to return the name of the module

@@ -113,7 +113,7 @@ public class ModulePrefab : MonoBehaviour
                 if (hint.mesh != null)
                 {
                     Gizmos.DrawMesh(hint.mesh,
-                        position + rotation * Orientations.Direction[i].ToVector3() * AbstractMap.BLOCK_SIZE,
+                        position + rotation * Directions.Direction[i].ToVector3() * Map.BLOCK_SIZE,
                         rotation * Quaternion.Euler(90f * hint.rotation * Vector3.up));
                 }
             }
@@ -123,7 +123,7 @@ public class ModulePrefab : MonoBehaviour
             if (modulePrefab.Faces[i].walkable)
             {
                 Gizmos.color = Color.red;
-                Gizmos.DrawLine(position + Vector3.down * 0.1f, position + rotation * Orientations.Rotations[i] * Vector3.forward * AbstractMap.BLOCK_SIZE * 0.5f + Vector3.down * 0.1f);
+                Gizmos.DrawLine(position + Vector3.down * 0.1f, position + rotation * Directions.Rotations[i] * Vector3.forward * Map.BLOCK_SIZE * 0.5f + Vector3.down * 0.1f);
             }
         }
 
@@ -136,7 +136,7 @@ public class ModulePrefab : MonoBehaviour
         for (int i = 0; i < 4; i++)
         {
             var face = modulePrefab.Faces[i];
-            Handles.Label(position + rotation * Orientations.Rotations[i] * Vector3.forward * InfiniteMap.BLOCK_SIZE / 2f, face.ToString(), ModulePrefab.style);
+            Handles.Label(position + rotation * Directions.Rotations[i] * Vector3.forward * InfiniteMap.BLOCK_SIZE / 2f, face.ToString(), ModulePrefab.style);
         }
     }
 #endif
@@ -147,8 +147,8 @@ public class ModulePrefab : MonoBehaviour
         for (int i = 0; i < 4; i++)
         {
             // Get faces for rotation r1 and r2
-            var face1 = this.Faces[Orientations.Rotate(Orientations.Directions[i], r1)] as HorizontalFaceDetails;
-            var face2 = this.Faces[Orientations.Rotate(Orientations.Directions[i], r2)] as HorizontalFaceDetails;
+            var face1 = this.Faces[Directions.Rotate(Directions.PossibleDirections[i], r1)] as HorizontalFaceDetails;
+            var face2 = this.Faces[Directions.Rotate(Directions.PossibleDirections[i], r2)] as HorizontalFaceDetails;
 
             // Compare connectors
             if (face1.connector != face2.connector)
@@ -169,7 +169,7 @@ public class ModulePrefab : MonoBehaviour
     // Method to reset the module details
     void Reset()
     {
-        // Initialize face details
+        // InitializeMap face details
         this.Forward = new HorizontalFaceDetails();
         this.Back = new HorizontalFaceDetails();
         this.Right = new HorizontalFaceDetails();

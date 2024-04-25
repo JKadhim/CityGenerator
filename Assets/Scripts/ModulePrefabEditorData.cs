@@ -65,7 +65,7 @@ public class ModulePrefabEditorData
                 for (int rotation = 0; rotation < 4; rotation++)
                 {
                     // Get the face details of the other module prefabObject at the rotated direction.
-                    var otherFace = prefab.Faces[Orientations.Rotate(direction, rotation + 2)] as ModulePrefab.HorizontalFaceDetails;
+                    var otherFace = prefab.Faces[Directions.Rotate(direction, rotation + 2)] as ModulePrefab.HorizontalFaceDetails;
 
                     // Skip if the other module prefabObject excludes the current module prefabObject.
                     if (otherFace.excludedNeighbours.Contains(this.modulePrefab))

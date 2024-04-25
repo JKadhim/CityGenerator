@@ -37,7 +37,7 @@ public class CullingData : MonoBehaviour
     // Method to get the center of a chunk based on its address
     public Vector3 GetChunkCenter(Vector3Int chunkAddress)
     {
-        return this.MapBehaviour.GetWorldspacePosition(chunkAddress * this.ChunkSize) + (this.ChunkSize - 1) * 0.5f * AbstractMap.BLOCK_SIZE * Vector3.one;
+        return this.MapBehaviour.GetWorldSpacePosition(chunkAddress * this.ChunkSize) + (this.ChunkSize - 1) * 0.5f * Map.BLOCK_SIZE * Vector3.one;
     }
 
     // Method to retrieve a chunk based on its address
@@ -47,7 +47,7 @@ public class CullingData : MonoBehaviour
         {
             return this.Chunks[chunkAddress];
         }
-        var chunk = new Chunk(new Bounds(this.GetChunkCenter(chunkAddress), AbstractMap.BLOCK_SIZE * this.ChunkSize * Vector3.one));
+        var chunk = new Chunk(new Bounds(this.GetChunkCenter(chunkAddress), Map.BLOCK_SIZE * this.ChunkSize * Vector3.one));
         this.Chunks[chunkAddress] = chunk;
         this.ChunksInRange.Add(chunk);
         return chunk;

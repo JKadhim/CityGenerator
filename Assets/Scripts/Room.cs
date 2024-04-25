@@ -57,7 +57,7 @@ public class Room
         // Draw wireframe cubes representing the slots of the room.
         foreach (var slot in this.Slots)
         {
-            Gizmos.DrawWireCube(map.GetWorldspacePosition(slot.position), Vector3.one * AbstractMap.BLOCK_SIZE);
+            Gizmos.DrawWireCube(map.GetWorldSpacePosition(slot.position), Vector3.one * Map.BLOCK_SIZE);
         }
     }
 #endif

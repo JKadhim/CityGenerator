@@ -64,7 +64,7 @@ public class QueueDictionary<TKey, TValue>
         }
     }
 
-    // Clear both the queue and the dictionary.
+    // ClearMap both the queue and the dictionary.
     public void Clear()
     {
         dict.Clear();

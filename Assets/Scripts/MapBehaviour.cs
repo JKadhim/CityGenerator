@@ -18,7 +18,7 @@ public class MapBehaviour : MonoBehaviour
     private CullingData cullingData;
 
     // Method to get world space position from map position
-    public Vector3 GetWorldspacePosition(Vector3Int position)
+    public Vector3 GetWorldSpacePosition(Vector3Int position)
     {
         return this.transform.position
             + Vector3.up * InfiniteMap.BLOCK_SIZE / 2f
@@ -33,7 +33,7 @@ public class MapBehaviour : MonoBehaviour
     }
 
     // Method to clear the map and associated game objects
-    public void Clear()
+    public void ClearMap()
     {
         // Collect all child transforms
         var children = new List<Transform>();
@@ -51,20 +51,21 @@ public class MapBehaviour : MonoBehaviour
     }
 
     // Method to initialize the map
-    public void Initialize()
+    public void InitializeMap()
     {
         // Set current module data to module list
         ModuleData.current = this.moduleData.modules;
         
-        // Clear existing map and create a new InfiniteMap instance
-        this.Clear();
+        // ClearMap existing map and create a new InfiniteMap instance
+        this.ClearMap();
+
         this.map = new InfiniteMap(this.mapHeight);
         // Apply boundary constraints if specified
         if (this.applyBoundaryConstraints && this.boundaryConstraints != null && this.boundaryConstraints.Any())
         {
             this.map.ApplyBoundaryConstraints(this.boundaryConstraints);
         }
-        // Initialize culling data component
+        // InitializeMap culling data component
         this.cullingData = this.GetComponent<CullingData>();
         this.cullingData.Initialize();
     }
@@ -104,7 +105,7 @@ public class MapBehaviour : MonoBehaviour
             this.map.buildQueue.Dequeue();
         }
 
-        // Clear outdated slots in the culling data
+        // ClearMap outdated slots in the culling data
         this.cullingData.ClearOutdatedSlots();
     }
 
@@ -138,7 +139,7 @@ public class MapBehaviour : MonoBehaviour
         gameObject.name = module.prefab.gameObject.name + " " + slot.position;
         GameObject.DestroyImmediate(gameObject.GetComponent<ModulePrefab>());
         gameObject.transform.parent = this.transform;
-        gameObject.transform.SetPositionAndRotation(this.GetWorldspacePosition(slot.position), Quaternion.Euler(90f * module.rotation * Vector3.up));
+        gameObject.transform.SetPositionAndRotation(this.GetWorldSpacePosition(slot.position), Quaternion.Euler(90f * module.rotation * Vector3.up));
         slot.gameObject = gameObject;
         this.cullingData.AddSlot(slot);
         return true;
@@ -174,7 +175,7 @@ public class MapBehaviour : MonoBehaviour
             {
                 continue;
             }
-            Handles.Label(mapBehaviour.GetWorldspacePosition(slot.position), slot.modules.Count.ToString());
+            Handles.Label(mapBehaviour.GetWorldSpacePosition(slot.position), slot.modules.Count.ToString());
         }
     }
 #endif

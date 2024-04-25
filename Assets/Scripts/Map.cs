@@ -4,9 +4,11 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-public abstract class AbstractMap
+public abstract class Map
 {
     public const float BLOCK_SIZE = 2f;
+    
+    //arbitrary value
     public const int HISTORY_SIZE = 3000;
 
     public static System.Random random;
@@ -23,7 +25,7 @@ public abstract class AbstractMap
 
     public short[][] InitialModuleHealth => initialModuleHealth;
 
-    protected AbstractMap()
+    protected Map()
     {
         random = new System.Random();
 
@@ -83,7 +85,7 @@ public abstract class AbstractMap
     // Method to enforce a walkway between two positions
     public void EnforceWalkway(Vector3Int start, Vector3Int destination)
     {
-        int direction = Orientations.GetIndex((Vector3)(destination - start));
+        int direction = Directions.GetIndex((Vector3)(destination - start));
         EnforceWalkway(start, direction);
         EnforceWalkway(destination, (direction + 2) % 4);
     }
@@ -97,7 +99,7 @@ public abstract class AbstractMap
         try
         {
 #endif
-            // Clear the removal queue and initialize the work area with non-collapsed slots from the targets
+            // ClearMap the removal queue and initialize the work area with non-collapsed slots from the targets
             removalQueue.Clear();
             workArea = new HashSet<Slot>(targets.Select(target => GetSlot(target)).Where(slot => slot != null && !slot.Collapsed));
 

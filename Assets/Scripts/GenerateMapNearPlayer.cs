@@ -20,7 +20,7 @@ public class GenerateMapNearPlayer : MonoBehaviour {
 
         public ChunkEvents(GenerateMapNearPlayer source)
         {
-            // Initialize collections and source reference
+            // InitializeMap collections and source reference
             this.CompletedChunks = new ConcurrentQueue<Vector3Int>();
             this.MapGenerationCallbackReceivers = new List<IMapGenerationCallbackReceiver>();
             this.source = source;
@@ -65,10 +65,10 @@ public class GenerateMapNearPlayer : MonoBehaviour {
 
     void Start()
     {
-        // Initialize data structures and references
+        // InitializeMap data structures and references
         this.generatedChunks = new HashSet<Vector3Int>();
         this.mapBehaviour = this.GetComponent<MapBehaviour>();
-        this.mapBehaviour.Initialize();
+        this.mapBehaviour.InitializeMap();
         this.map = this.mapBehaviour.map;
 
         // Generate initial chunks and build slots
@@ -100,7 +100,7 @@ public class GenerateMapNearPlayer : MonoBehaviour {
         int chunkX = Mathf.FloorToInt(targetX / chunkSize);
         int chunkZ = Mathf.FloorToInt(targetZ / chunkSize);
 
-        // Initialize variables for finding the closest missing chunk
+        // InitializeMap variables for finding the closest missing chunk
         Vector3Int closestMissingChunk = Vector3Int.zero;
         float closestDistance = this.Range;
         bool any = false;

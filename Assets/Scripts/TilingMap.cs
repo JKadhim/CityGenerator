@@ -4,9 +4,9 @@ using UnityEngine;
 
 
 //TilingMap class represents a map consisting of a grid of slots in a 3D space. 
-//Inherits from AbstractMap.
+//Inherits from Map.
 
-public class TilingMap : AbstractMap
+public class TilingMap : Map
 {
     public readonly Vector3Int size;
 

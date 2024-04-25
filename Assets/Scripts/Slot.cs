@@ -9,7 +9,7 @@ public class Slot
     public ModuleSet modules;
     public short[][] moduleHealth;
 
-    private readonly AbstractMap map;
+    private readonly Map map;
 
     public Module module;
     public GameObject gameObject;
@@ -19,7 +19,7 @@ public class Slot
     // Indicates whether the slot is constructed (has a GameObject or a collapsed module)
     public bool Constructed { get { return gameObject != null || (Collapsed && !module.prefab.spawn); } }
 
-    public Slot(Vector3Int position, AbstractMap map)
+    public Slot(Vector3Int position, Map map)
     {
         this.position = position;
         this.map = map;
@@ -27,8 +27,8 @@ public class Slot
         modules = new ModuleSet(initializeFull: true);
     }
 
-    // Constructor to Initialize a new instance of the Slot class as a copy of the prefabObject
-    public Slot(Vector3Int position, AbstractMap map, Slot prefab)
+    // Constructor to InitializeMap a new instance of the Slot class as a copy of the prefabObject
+    public Slot(Vector3Int position, Map map, Slot prefab)
     {
         this.position = position;
         this.map = map;
@@ -39,7 +39,7 @@ public class Slot
     //retrieves the neighbouring slot in the specified direction.
     public Slot GetNeighbour(int direction)
     {
-        return map.GetSlot(position + Orientations.Direction[direction]);
+        return map.GetSlot(position + Directions.Direction[direction]);
     }
 
     public void Collapse(Module module)
@@ -84,7 +84,7 @@ public class Slot
         float max = modules.Select(module => module.prefab.probability).Sum();
 
         // Generates a random roll within the range of module probabilities.
-        float roll = (float)(AbstractMap.random.NextDouble() * max);
+        float roll = (float)(Map.random.NextDouble() * max);
 
         // Accumulates probabilities until the roll is reached and collapses the slot with the selected module.
         float p = 0;
@@ -129,9 +129,9 @@ public class Slot
             {
 #if UNITY_EDITOR
                 // Check if the neighbor is outside of the map's range limit
-                if ((map as InfiniteMap).IsOutsideOfRangeLimit(position + Orientations.Direction[i]))
+                if ((map as InfiniteMap).IsOutsideOfRangeLimit(position + Directions.Direction[i]))
                 {
-                    (map as InfiniteMap).OnHitRangeLimit(position + Orientations.Direction[i], modulesToRemove);
+                    (map as InfiniteMap).OnHitRangeLimit(position + Directions.Direction[i], modulesToRemove);
                 }
 #endif
                 continue;

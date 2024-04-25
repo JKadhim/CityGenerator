@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 
 //Manages orientation-related operations and constants.
-public static class Orientations
+public static class Directions
 {
     public const int UP = 0;
     public const int LEFT = 1;
@@ -52,14 +52,12 @@ public static class Orientations
         directions = vectors.Select(vector => Vector3Int.RoundToInt(vector)).ToArray();
     }
 
-    public static readonly int[] Directions = { 0, 1, 2, 3 };
-
-    public static readonly string[] Names = { "+Green (Forward)", "+Red (Left)", "-Green (Back)", "-Red (Right)" };
+    public static readonly int[] PossibleDirections = { 0, 1, 2, 3 };
 
     //Rotates the given direction index by the specified amount.
     public static int Rotate(int direction, int amount)
     {
-        return Directions[(Array.IndexOf(Directions, direction) + amount) % 4];
+        return PossibleDirections[(Array.IndexOf(PossibleDirections, direction) + amount) % 4];
     }
 
     //Determines the index of the direction vector based on its components
