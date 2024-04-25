@@ -7,7 +7,7 @@ public class MapBehaviour : MonoBehaviour
 {
     public InfiniteMap map;
 
-    public int mapHeight = 6;
+    public int mapHeight = 1;
 
     public BoundaryConstraint[] boundaryConstraints;
 

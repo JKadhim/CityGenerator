@@ -2,7 +2,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(MapBehaviour))]
 [RequireComponent(typeof(CullingData))]
-public class OcclusionCulling : MonoBehaviour
+public class Culling : MonoBehaviour
 {
     public Camera Camera;
 

@@ -27,6 +27,7 @@ public abstract class Map
 
     protected Map()
     {
+
         random = new System.Random();
 
         history = new RingBuffer<HistoryItem>(HISTORY_SIZE)

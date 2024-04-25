@@ -18,7 +18,6 @@ public class ModulePrefab : MonoBehaviour
 
         public ModulePrefab[] excludedNeighbours;
         public bool enforceWalkableNeighbor = false;
-        public bool isOcclusionPortal = false;
     }
 
     // Serializable class representing horizontal face details

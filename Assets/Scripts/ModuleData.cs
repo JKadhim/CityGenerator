@@ -18,7 +18,7 @@ public class ModuleData : ScriptableObject, ISerializationCallbackReceiver
     public void SimplifyNeighbourData()
     {
         ModuleData.current = this.modules;
-        const int height = 12;
+        const int height = 1;
         int count = 0;
         var center = new Vector3Int(0, height / 2, 0);
 
@@ -38,7 +38,7 @@ public class ModuleData : ScriptableObject, ISerializationCallbackReceiver
             catch (CollapseFailedException exception)
             {
                 // Throw an exception if module collapse fails
-                throw new InvalidOperationException("Module " + module.name + " creates a failure at relative position " + (exception.slot.position - center) + ".");
+                throw new InvalidOperationException("Module " + module.name + " creates a failure at pos: " + (exception.slot.position - center) + ".");
             }
             // Iterate over directions and simplify possible neighbours
             for (int direction = 0; direction < 4; direction++)
@@ -73,7 +73,6 @@ public class ModuleData : ScriptableObject, ISerializationCallbackReceiver
             // Yield enabled module prefabs
             if (item != null && item.enabled)
             {
-                Debug.Log("got");
                 yield return item;
             }
         }
@@ -144,7 +143,6 @@ public class ModuleData : ScriptableObject, ISerializationCallbackReceiver
             // Convert possible neighbours to arrays
             module.possibleNeighboursArray = module.possibleNeighbours.Select(ms => ms.ToArray()).ToArray();
         }
-        Debug.Log("exit");
         // ClearMap progress bar
         EditorUtility.ClearProgressBar();
 

@@ -97,7 +97,7 @@ public class CullingData : MonoBehaviour
         {
             var face = slot.module.GetFace(i);
             // If the face is a connector or an occlusion portal, continue to the next iteration
-            if (face.connector == 1 || face.isOcclusionPortal)
+            if (face.connector == 1)
             {
                 continue;
             }
@@ -110,7 +110,7 @@ public class CullingData : MonoBehaviour
             }
 
             // If the neighbor slot is collapsed and exists in the RoomsByPosition dictionary
-            if (neighbor.Collapsed && this.RoomsByPosition.ContainsKey(neighbor.position) && !neighbor.module.GetFace((i + 2) % 4).isOcclusionPortal)
+            if (neighbor.Collapsed && this.RoomsByPosition.ContainsKey(neighbor.position))
             {
                 // If room is null, set it to the room associated with the neighbor position; otherwise, merge the rooms
                 room ??= this.RoomsByPosition[neighbor.position];

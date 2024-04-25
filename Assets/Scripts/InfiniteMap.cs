@@ -11,7 +11,7 @@ public class InfiniteMap : Map
     public readonly int Height;
 
     public Vector3Int rangeLimitCenter;
-    public int RangeLimit = 80;
+    public int RangeLimit = 100;
 
     private readonly TilingMap defaultColumn;
 
