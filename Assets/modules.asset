@@ -156,7 +156,7 @@ MonoBehaviour:
     - data: 0446060000000000
     - data: 0010080000000000
     index: 12
-    PLogP: 0
+    PLogP: 1.3862944
   - name: BuildingStraight R1
     prefab: {fileID: 5014770647883967660, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 1059940397729900238, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
@@ -167,7 +167,7 @@ MonoBehaviour:
     - data: 0020010000000000
     - data: 0000100000000000
     index: 13
-    PLogP: 0
+    PLogP: 1.3862944
   - name: BuildingStraight R2
     prefab: {fileID: 5014770647883967660, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 1059940397729900238, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
@@ -178,7 +178,7 @@ MonoBehaviour:
     - data: 0000100000000000
     - data: 0040040000000000
     index: 14
-    PLogP: 0
+    PLogP: 1.3862944
   - name: BuildingStraight R3
     prefab: {fileID: 5014770647883967660, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 1059940397729900238, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
@@ -189,7 +189,7 @@ MonoBehaviour:
     - data: 0080080000000000
     - data: 0223030000000000
     index: 15
-    PLogP: 0
+    PLogP: 1.3862944
   - name: BuildingCorner R0
     prefab: {fileID: 1943962179079846891, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 8846549757111908649, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}

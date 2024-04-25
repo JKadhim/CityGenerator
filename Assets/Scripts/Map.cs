@@ -6,7 +6,7 @@ using UnityEngine;
 
 public abstract class Map
 {
-    public const float BLOCK_SIZE = 2f;
+    public const float BLOCK_SIZE = 4f;
     
     //arbitrary value
     public const int HISTORY_SIZE = 3000;
