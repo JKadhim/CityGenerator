@@ -13,7 +13,7 @@ public class ModuleDataEditor : Editor
         int count = moduleData.modules != null ? moduleData.modules.Length : 0;
         GUILayout.Label(count + " Modules");
 
-        EditorGUILayout.HelpBox("Create a transform that contains one child for each module prototype and save it as a prefab. Drag it into the Prototypes property above and click \"Create module data\".", MessageType.Info);
+        EditorGUILayout.HelpBox("Create a transform that contains one child for each module prototype and save it as a prefab.", MessageType.Info);
 
         if (GUILayout.Button("Create module data"))
         {

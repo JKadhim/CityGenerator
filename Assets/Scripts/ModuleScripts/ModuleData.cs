@@ -119,20 +119,4 @@ public class ModuleData : ScriptableObject, ISerializationCallbackReceiver
             module.possibleNeighboursArray = module.possibleNeighbours.Select(ms => ms.ToArray()).ToArray();
         }
     }
-
-    // Method to save module prefabs (Editor only)
-    public void SavePrefabs()
-    {
-#if UNITY_EDITOR
-        // Mark prefabs as dirty and save assets
-        EditorUtility.SetDirty(this.prefabs);
-        AssetDatabase.SaveAssets();
-        // Set module prefabs based on prefabObject components
-        foreach (var module in this.modules)
-        {
-            module.prefab = module.prefabObject.GetComponent<ModulePrefab>();
-        }
-#endif
-    }
-
 }

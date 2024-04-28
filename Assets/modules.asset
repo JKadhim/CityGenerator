@@ -156,7 +156,7 @@ MonoBehaviour:
     - data: 0446060000000000
     - data: 0010280000000000
     index: 12
-    PLogP: 3.295837
+    PLogP: 0
   - name: BuildingStraight R1
     prefab: {fileID: 5014770647883967660, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 1059940397729900238, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
@@ -167,7 +167,7 @@ MonoBehaviour:
     - data: 0020410000000000
     - data: 0000100000000000
     index: 13
-    PLogP: 3.295837
+    PLogP: 0
   - name: BuildingStraight R2
     prefab: {fileID: 5014770647883967660, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 1059940397729900238, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
@@ -178,7 +178,7 @@ MonoBehaviour:
     - data: 0000100000000000
     - data: 0040840000000000
     index: 14
-    PLogP: 3.295837
+    PLogP: 0
   - name: BuildingStraight R3
     prefab: {fileID: 5014770647883967660, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 1059940397729900238, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
@@ -189,7 +189,7 @@ MonoBehaviour:
     - data: 0080080100000000
     - data: 0223030000000000
     index: 15
-    PLogP: 3.295837
+    PLogP: 0
   - name: BuildingCorner R0
     prefab: {fileID: 1943962179079846891, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 8846549757111908649, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
@@ -255,7 +255,7 @@ MonoBehaviour:
     - data: 0406000000000000
     - data: 0010000000000000
     index: 21
-    PLogP: 0
+    PLogP: 0.6081976
   - name: Door R1
     prefab: {fileID: 7383418778151698310, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 5190357299084120670, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
@@ -266,7 +266,7 @@ MonoBehaviour:
     - data: 0020000000000000
     - data: 0000100000000000
     index: 22
-    PLogP: 0
+    PLogP: 0.6081976
   - name: Door R2
     prefab: {fileID: 7383418778151698310, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 5190357299084120670, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
@@ -277,7 +277,7 @@ MonoBehaviour:
     - data: 0000100000000000
     - data: 0040000000000000
     index: 23
-    PLogP: 0
+    PLogP: 0.6081976
   - name: Door R3
     prefab: {fileID: 7383418778151698310, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 5190357299084120670, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
@@ -288,4 +288,4 @@ MonoBehaviour:
     - data: 0080000000000000
     - data: 0203000000000000
     index: 24
-    PLogP: 0
+    PLogP: 0.6081976

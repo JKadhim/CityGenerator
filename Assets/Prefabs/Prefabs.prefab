@@ -99,7 +99,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebfff9b6ea304594f94098778c129179, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  probability: 3
+  probability: 1
   spawn: 1
   isInterior: 0
   Left:
@@ -610,7 +610,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebfff9b6ea304594f94098778c129179, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  probability: 1
+  probability: 1.5
   spawn: 1
   isInterior: 0
   Left:
@@ -678,7 +678,7 @@ Transform:
   m_GameObject: {fileID: 5850943524673323622}
   serializedVersion: 2
   m_LocalRotation: {x: 0.00000014106499, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -14}
+  m_LocalPosition: {x: 0, y: 1, z: -10}
   m_LocalScale: {x: 2, y: 1, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -928,6 +928,7 @@ MonoBehaviour:
     connector: 3
     excludedNeighbours:
     - {fileID: 1943962179079846891}
+    - {fileID: 7383418778151698310}
     enforceWalkableNeighbor: 0
     symmetric: 0
     flipped: 0
@@ -936,6 +937,7 @@ MonoBehaviour:
     connector: 3
     excludedNeighbours:
     - {fileID: 1943962179079846891}
+    - {fileID: 7383418778151698310}
     enforceWalkableNeighbor: 0
     symmetric: 0
     flipped: 1
@@ -1086,8 +1088,8 @@ MonoBehaviour:
     walkable: 1
     connector: 1
     excludedNeighbours:
-    - {fileID: 4470526475121141063}
     - {fileID: 483378561785634603}
+    - {fileID: 4470526475121141063}
     enforceWalkableNeighbor: 0
     symmetric: 0
     flipped: 1
@@ -1112,7 +1114,6 @@ MonoBehaviour:
     walkable: 0
     connector: 2
     excludedNeighbours:
-    - {fileID: 483378561785634603}
     - {fileID: 483378561785634603}
     enforceWalkableNeighbor: 0
     symmetric: 1
