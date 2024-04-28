@@ -19,12 +19,5 @@ public class ModuleDataEditor : Editor
         {
             moduleData.CreateModules();
         }
-
-        EditorGUILayout.HelpBox("This removes neighbors that are implicitly exluded. It's optional and will make map generation ~20% faster.", MessageType.Info);
-
-        if (GUILayout.Button("Simplify module data"))
-        {
-            moduleData.SimplifyNeighbourData();
-        }
     }
 }

@@ -21,7 +21,7 @@ MonoBehaviour:
     possibleNeighbours:
     - data: 6400000000000000
     - data: 8101000000000000
-    - data: 0040060000000000
+    - data: 0040860000000000
     - data: 1108000000000000
     index: 0
     PLogP: 0
@@ -31,7 +31,7 @@ MonoBehaviour:
     rotation: 1
     possibleNeighbours:
     - data: 1202000000000000
-    - data: 00800c0000000000
+    - data: 00800c0100000000
     - data: 2201000000000000
     - data: c800000000000000
     index: 1
@@ -41,7 +41,7 @@ MonoBehaviour:
     prefabObject: {fileID: 3506392452259492803, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     rotation: 2
     possibleNeighbours:
-    - data: 0010090000000000
+    - data: 0010290000000000
     - data: 4402000000000000
     - data: 9100000000000000
     - data: 2404000000000000
@@ -55,7 +55,7 @@ MonoBehaviour:
     - data: 8804000000000000
     - data: 3200000000000000
     - data: 4808000000000000
-    - data: 0020030000000000
+    - data: 0020430000000000
     index: 3
     PLogP: 0
   - name: OuterCurve R0
@@ -108,8 +108,8 @@ MonoBehaviour:
     rotation: 0
     possibleNeighbours:
     - data: 0200000000000000
-    - data: 00800c0000000000
-    - data: 0040060000000000
+    - data: 00800c0100000000
+    - data: 0040860000000000
     - data: 0100000000000000
     index: 8
     PLogP: 0
@@ -118,8 +118,8 @@ MonoBehaviour:
     prefabObject: {fileID: 5850943524673323622, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     rotation: 1
     possibleNeighbours:
-    - data: 0010090000000000
-    - data: 00800c0000000000
+    - data: 0010290000000000
+    - data: 00800c0100000000
     - data: 0200000000000000
     - data: 0400000000000000
     index: 9
@@ -129,10 +129,10 @@ MonoBehaviour:
     prefabObject: {fileID: 5850943524673323622, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     rotation: 2
     possibleNeighbours:
-    - data: 0010090000000000
+    - data: 0010290000000000
     - data: 0400000000000000
     - data: 0800000000000000
-    - data: 0020030000000000
+    - data: 0020430000000000
     index: 10
     PLogP: 0
   - name: InnerCurve R3
@@ -142,8 +142,8 @@ MonoBehaviour:
     possibleNeighbours:
     - data: 0800000000000000
     - data: 0100000000000000
-    - data: 0040060000000000
-    - data: 0020030000000000
+    - data: 0040860000000000
+    - data: 0020430000000000
     index: 11
     PLogP: 0
   - name: BuildingStraight R0
@@ -152,53 +152,53 @@ MonoBehaviour:
     rotation: 0
     possibleNeighbours:
     - data: 0000100000000000
-    - data: 0010010000000000
+    - data: 0010210000000000
     - data: 0446060000000000
-    - data: 0010080000000000
+    - data: 0010280000000000
     index: 12
-    PLogP: 1.3862944
+    PLogP: 3.295837
   - name: BuildingStraight R1
     prefab: {fileID: 5014770647883967660, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 1059940397729900238, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     rotation: 1
     possibleNeighbours:
-    - data: 0020020000000000
+    - data: 0020420000000000
     - data: 088c0c0000000000
-    - data: 0020010000000000
+    - data: 0020410000000000
     - data: 0000100000000000
     index: 13
-    PLogP: 1.3862944
+    PLogP: 3.295837
   - name: BuildingStraight R2
     prefab: {fileID: 5014770647883967660, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 1059940397729900238, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     rotation: 2
     possibleNeighbours:
     - data: 0119090000000000
-    - data: 0040020000000000
+    - data: 0040820000000000
     - data: 0000100000000000
-    - data: 0040040000000000
+    - data: 0040840000000000
     index: 14
-    PLogP: 1.3862944
+    PLogP: 3.295837
   - name: BuildingStraight R3
     prefab: {fileID: 5014770647883967660, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 1059940397729900238, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     rotation: 3
     possibleNeighbours:
-    - data: 0080040000000000
+    - data: 0080040100000000
     - data: 0000100000000000
-    - data: 0080080000000000
+    - data: 0080080100000000
     - data: 0223030000000000
     index: 15
-    PLogP: 1.3862944
+    PLogP: 3.295837
   - name: BuildingCorner R0
     prefab: {fileID: 1943962179079846891, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     prefabObject: {fileID: 8846549757111908649, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     rotation: 0
     possibleNeighbours:
-    - data: 0020020000000000
+    - data: 0020000000000000
     - data: 088c0c0000000000
     - data: 0446060000000000
-    - data: 0010080000000000
+    - data: 0010000000000000
     index: 16
     PLogP: 0
   - name: BuildingCorner R1
@@ -208,8 +208,8 @@ MonoBehaviour:
     possibleNeighbours:
     - data: 0119090000000000
     - data: 088c0c0000000000
-    - data: 0020010000000000
-    - data: 0040040000000000
+    - data: 0020000000000000
+    - data: 0040000000000000
     index: 17
     PLogP: 0
   - name: BuildingCorner R2
@@ -218,8 +218,8 @@ MonoBehaviour:
     rotation: 2
     possibleNeighbours:
     - data: 0119090000000000
-    - data: 0040020000000000
-    - data: 0080080000000000
+    - data: 0040000000000000
+    - data: 0080000000000000
     - data: 0223030000000000
     index: 18
     PLogP: 0
@@ -228,8 +228,8 @@ MonoBehaviour:
     prefabObject: {fileID: 8846549757111908649, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     rotation: 3
     possibleNeighbours:
-    - data: 0080040000000000
-    - data: 0010010000000000
+    - data: 0080000000000000
+    - data: 0010000000000000
     - data: 0446060000000000
     - data: 0223030000000000
     index: 19
@@ -239,9 +239,53 @@ MonoBehaviour:
     prefabObject: {fileID: 3711543520606606228, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
     rotation: 0
     possibleNeighbours:
-    - data: 0040100000000000
-    - data: 0020100000000000
-    - data: 0010100000000000
-    - data: 0080100000000000
+    - data: 0040900000000000
+    - data: 0020500000000000
+    - data: 0010300000000000
+    - data: 0080100100000000
     index: 20
+    PLogP: 0
+  - name: Door R0
+    prefab: {fileID: 7383418778151698310, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
+    prefabObject: {fileID: 5190357299084120670, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
+    rotation: 0
+    possibleNeighbours:
+    - data: 0000100000000000
+    - data: 0010000000000000
+    - data: 0406000000000000
+    - data: 0010000000000000
+    index: 21
+    PLogP: 0
+  - name: Door R1
+    prefab: {fileID: 7383418778151698310, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
+    prefabObject: {fileID: 5190357299084120670, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
+    rotation: 1
+    possibleNeighbours:
+    - data: 0020000000000000
+    - data: 080c000000000000
+    - data: 0020000000000000
+    - data: 0000100000000000
+    index: 22
+    PLogP: 0
+  - name: Door R2
+    prefab: {fileID: 7383418778151698310, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
+    prefabObject: {fileID: 5190357299084120670, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
+    rotation: 2
+    possibleNeighbours:
+    - data: 0109000000000000
+    - data: 0040000000000000
+    - data: 0000100000000000
+    - data: 0040000000000000
+    index: 23
+    PLogP: 0
+  - name: Door R3
+    prefab: {fileID: 7383418778151698310, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
+    prefabObject: {fileID: 5190357299084120670, guid: 227450da8cd5119418e8a1e3e8a890ac, type: 3}
+    rotation: 3
+    possibleNeighbours:
+    - data: 0080000000000000
+    - data: 0000100000000000
+    - data: 0080000000000000
+    - data: 0203000000000000
+    index: 24
     PLogP: 0

@@ -14,55 +14,6 @@ public class ModuleData : ScriptableObject, ISerializationCallbackReceiver
     public Module[] modules;
 
 #if UNITY_EDITOR
-    // Method to simplify neighbour data of modules
-    public void SimplifyNeighbourData()
-    {
-        ModuleData.current = this.modules;
-        const int height = 1;
-        int count = 0;
-        var center = new Vector3Int(0, height / 2, 0);
-
-        int p = 0;
-
-        // Iterate over modules
-        foreach (var module in this.modules)
-        {
-            // Create a new InfiniteMap for each module
-            var map = new InfiniteMap(height);
-            var slot = map.GetSlot(center);
-            try
-            {
-                // Attempt to collapse the module into the slot
-                slot.Collapse(module);
-            }
-            catch (CollapseFailedException exception)
-            {
-                // Throw an exception if module collapse fails
-                throw new InvalidOperationException("Module " + module.name + " creates a failure at pos: " + (exception.slot.position - center) + ".");
-            }
-            // Iterate over directions and simplify possible neighbours
-            for (int direction = 0; direction < 4; direction++)
-            {
-                var neighbour = slot.GetNeighbour(direction);
-                int unoptimizedNeighbourCount = module.possibleNeighbours[direction].Count;
-                module.possibleNeighbours[direction].Intersect(neighbour.modules);
-                count += unoptimizedNeighbourCount - module.possibleNeighbours[direction].Count;
-            }
-            // Convert possible neighbours to arrays
-            module.possibleNeighboursArray = module.possibleNeighbours.Select(ms => ms.ToArray()).ToArray();
-            p++;
-            // Display progress bar
-            EditorUtility.DisplayProgressBar("Simplifying... " + count, module.name, (float)p / this.modules.Length);
-        }
-        // Log the number of removed impossible neighbours
-        Debug.Log("Removed " + count + " impossible neighbours.");
-
-        // ClearMap progress bar and mark scene as dirty
-        EditorUtility.ClearProgressBar();
-        EditorUtility.SetDirty(this);
-        AssetDatabase.SaveAssets();
-    }
-
     // Method to get module prefabs from the prefabs transform
     private IEnumerable<ModulePrefab> GetPrefabs()
     {

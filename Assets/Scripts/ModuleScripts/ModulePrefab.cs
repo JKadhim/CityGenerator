@@ -111,9 +111,10 @@ public class ModulePrefab : MonoBehaviour
                 var hint = ModulePrefab.editorData.GetConnectorHint(i);
                 if (hint.mesh != null)
                 {
+                    Vector3 scaleTemp = new Vector3(2, 1, 2);
                     Gizmos.DrawMesh(hint.mesh,
                         position + rotation * Directions.Direction[i].ToVector3() * Map.BLOCK_SIZE,
-                        rotation * Quaternion.Euler(90f * hint.rotation * Vector3.up));
+                        rotation * Quaternion.Euler(90f * hint.rotation * Vector3.up), scaleTemp);
                 }
             }
         }
