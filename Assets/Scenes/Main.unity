@@ -474,7 +474,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Camera: {fileID: 963194227}
-  range: 40
+  range: 100
 --- !u!114 &2130819215
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -501,8 +501,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MapBehaviour: {fileID: 0}
-  ChunkSize: 3
-  DrawGizmo: 0
+  ChunkSize: 5
+  DrawGizmo: 1
 --- !u!114 &2130819217
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -517,7 +517,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Target: {fileID: 754229050}
   ChunkSize: 5
-  Range: 30
+  Range: 60
 --- !u!114 &2130819218
 MonoBehaviour:
   m_ObjectHideFlags: 0

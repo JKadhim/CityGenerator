@@ -46,6 +46,7 @@ public class ModulePrefab : MonoBehaviour
     public float probability = 1.0f;
     public bool spawn = true;
     public bool isInterior = false;
+    public bool isVertical = false;
 
     public HorizontalFaceDetails Left;
     public HorizontalFaceDetails Back;

@@ -59,18 +59,6 @@ public class CullingData : MonoBehaviour
         return this.GetChunk(this.GetChunkAddress(position));
     }
 
-    public Room GetRoom(Vector3Int position)
-    {
-        if (this.RoomsByPosition.ContainsKey(position))
-        {
-            return this.RoomsByPosition[position];
-        }
-        else
-        {
-            return null;
-        }
-    }
-
     // Method to add a slot to the culling data
     public void AddSlot(Slot slot)
     {
@@ -96,7 +84,7 @@ public class CullingData : MonoBehaviour
         for (int i = 0; i < 4; i++)
         {
             var face = slot.module.GetFace(i);
-            // If the face is a connector or an occlusion portal, continue to the next iteration
+            // If the face is a connector, continue to the next iteration
             if (face.connector == 1)
             {
                 continue;
@@ -158,7 +146,7 @@ public class CullingData : MonoBehaviour
         }
     }
 
-    //remove a slot and associated rooms and portals
+    //remove a slot and associated rooms
     public void RemoveSlot(Slot slot)
     {
         var chunk = this.GetChunkFromPosition(slot.position);

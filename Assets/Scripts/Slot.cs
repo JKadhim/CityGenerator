@@ -231,12 +231,6 @@ public class Slot
         RemoveModules(ModuleSet.FromEnumerable(toRemove));
     }
 
-    //GetHashCode method returns the hash code of the slot's position.
-    public override int GetHashCode()
-    {
-        return position.GetHashCode();
-    }
-
     //Clears moduleHealth and modules to mark the slot as forgotten.
     public void Forget()
     {
