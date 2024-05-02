@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using System.Linq;
+using System;
 
 [System.Serializable]
 public class ModuleSet : ICollection<Module>
@@ -14,7 +15,6 @@ public class ModuleSet : ICollection<Module>
     private float entropy;
     private bool entropyOutdated = true;
 
-    //Count of modules in the module set
     public int Count
     {
         get
@@ -22,21 +22,20 @@ public class ModuleSet : ICollection<Module>
             int result = 0;
             for (int i = 0; i < this.data.Length - 1; i++)
             {
-                result += CountBits(this.data[i]);
+                result += countBits(this.data[i]);
             }
-            return result + CountBits(this.data[data.Length - 1] & LastItemUsageMask);
+            return result + countBits(this.data[this.data.Length - 1] & this.lastItemUsageMask);
         }
     }
 
-    private long LastItemUsageMask
+    private long lastItemUsageMask
     {
         get
         {
-            return ((long)1 << (ModuleData.current.Length % 64)) - 1;
+            return ((long)1 << (ModuleData.Current.Length % 64)) - 1;
         }
     }
 
-    //Checks if the set is full
     public bool Full
     {
         get
@@ -48,11 +47,10 @@ public class ModuleSet : ICollection<Module>
                     return false;
                 }
             }
-            return (~this.data[data.Length - 1] & this.LastItemUsageMask) == 0;
+            return (~this.data[this.data.Length - 1] & this.lastItemUsageMask) == 0;
         }
     }
 
-    //Checks if the set is empty
     public bool Empty
     {
         get
@@ -64,7 +62,7 @@ public class ModuleSet : ICollection<Module>
                     return false;
                 }
             }
-            return (this.data[data.Length - 1] & this.LastItemUsageMask) == 0;
+            return (this.data[this.data.Length - 1] & this.lastItemUsageMask) == 0;
         }
     }
 
@@ -74,21 +72,17 @@ public class ModuleSet : ICollection<Module>
         {
             if (this.entropyOutdated)
             {
-                this.entropy = this.CalculateEntropy();
+                this.entropy = this.calculateEntropy();
                 this.entropyOutdated = false;
             }
             return this.entropy;
         }
     }
 
-    //Initializes a new instance of the ModuleSet class.
     public ModuleSet(bool initializeFull = false)
     {
-        // Calculate the number of long integers needed to store the module data
-        int dataSize = ModuleData.current.Length / bitsPerItem + (ModuleData.current.Length % bitsPerItem == 0 ? 0 : 1);
-        this.data = new long[dataSize];
+        this.data = new long[ModuleData.Current.Length / bitsPerItem + (ModuleData.Current.Length % bitsPerItem == 0 ? 0 : 1)];
 
-        // If initializeFull is true, set all bits in the data to 1 (indicating all modules are present)
         if (initializeFull)
         {
             for (int i = 0; i < this.data.Length; i++)
@@ -98,29 +92,21 @@ public class ModuleSet : ICollection<Module>
         }
     }
 
-
-
-    //Initializes a new instance of the ModuleSet class from an enumerable collection of modules.
     public ModuleSet(IEnumerable<Module> source) : this()
     {
-        // Add modules from the source collection to the ModuleSet
         foreach (var module in source)
         {
             this.Add(module);
         }
     }
 
-
-    //Initializes a new instance of the ModuleSet class from an existing ModuleSet.
     public ModuleSet(ModuleSet source)
     {
-        // Copy data from the source ModuleSet
         this.data = source.data.ToArray();
         this.entropy = source.Entropy;
         this.entropyOutdated = false;
     }
 
-    //Creates a new ModuleSet from an enumerable collection of modules.
     public static ModuleSet FromEnumerable(IEnumerable<Module> source)
     {
         var result = new ModuleSet();
@@ -131,11 +117,10 @@ public class ModuleSet : ICollection<Module>
         return result;
     }
 
-    // Adds the module to the ModuleSet.
     public void Add(Module module)
     {
-        int i = module.index / bitsPerItem;
-        long mask = (long)1 << (module.index % bitsPerItem);
+        int i = module.Index / bitsPerItem;
+        long mask = (long)1 << (module.Index % bitsPerItem);
 
         long value = this.data[i];
 
@@ -146,28 +131,10 @@ public class ModuleSet : ICollection<Module>
         }
     }
 
-
-    // Adds all modules from set2 to set1.
-    public void Add(ModuleSet set)
-    {
-        for (int i = 0; i < this.data.Length; i++)
-        {
-            long current = this.data[i];
-            long updated = current | set.data[i];
-
-            if (current != updated)
-            {
-                this.data[i] = updated;
-                this.entropyOutdated = true;
-            }
-        }
-    }
-
-    //Removes a module from the ModuleSet.
     public bool Remove(Module module)
     {
-        int i = module.index / bitsPerItem;
-        long mask = (long)1 << (module.index % bitsPerItem);
+        int i = module.Index / bitsPerItem;
+        long mask = (long)1 << (module.Index % bitsPerItem);
 
         long value = this.data[i];
 
@@ -183,31 +150,13 @@ public class ModuleSet : ICollection<Module>
         }
     }
 
-    //Removes all modules from this ModuleSet that are also present in another ModuleSet.
-    public void Remove(ModuleSet set)
-    {
-        for (int i = 0; i < this.data.Length; i++)
-        {
-            long current = this.data[i];
-            long updated = current & ~set.data[i];
-
-            if (current != updated)
-            {
-                this.data[i] = updated;
-                this.entropyOutdated = true;
-            }
-        }
-    }
-
-    //Checks if the ModuleSet contains a specific module
     public bool Contains(Module module)
     {
-        int i = module.index / bitsPerItem;
-        long mask = (long)1 << (module.index % bitsPerItem);
+        int i = module.Index / bitsPerItem;
+        long mask = (long)1 << (module.Index % bitsPerItem);
         return (this.data[i] & mask) != 0;
     }
 
-    //Checks if the ModuleSet contains a specific module at a specific index
     public bool Contains(int index)
     {
         int i = index / bitsPerItem;
@@ -215,7 +164,6 @@ public class ModuleSet : ICollection<Module>
         return (this.data[i] & mask) != 0;
     }
 
-    //Clears all modules from the ModuleSet
     public void Clear()
     {
         this.entropyOutdated = true;
@@ -225,8 +173,12 @@ public class ModuleSet : ICollection<Module>
         }
     }
 
-    //Intersects the current ModuleSet with another ModuleSet by
-    //keeping only the elements that are in both sets.
+    /// <summary>
+    /// Removes all modules that are not in the supplied set.
+    /// </summary>
+    /// <param name="moduleSet"></param>
+    /// <returns></returns>
+
     public void Intersect(ModuleSet moduleSet)
     {
         for (int i = 0; i < this.data.Length; i++)
@@ -243,18 +195,44 @@ public class ModuleSet : ICollection<Module>
         }
     }
 
-
-    //Counts the number of set bits (1s) in a 64-bit integer using bitwise operations.
-    //https://stackoverflow.com/questions/2709430/count-number-of-bits-in-a-64-bit-long-big-integer/2709523#2709523
-    private static int CountBits(long i)
+    public void Add(ModuleSet set)
     {
-        // Apply bit manipulation operations to count the set bits
-        i -= ((i >> 1) & 0x5555555555555555);
+        for (int i = 0; i < this.data.Length; i++)
+        {
+            long current = this.data[i];
+            long updated = current | set.data[i];
+
+            if (current != updated)
+            {
+                this.data[i] = updated;
+                this.entropyOutdated = true;
+            }
+        }
+    }
+
+    public void Remove(ModuleSet set)
+    {
+        for (int i = 0; i < this.data.Length; i++)
+        {
+            long current = this.data[i];
+            long updated = current & ~set.data[i];
+
+            if (current != updated)
+            {
+                this.data[i] = updated;
+                this.entropyOutdated = true;
+            }
+        }
+    }
+
+    // https://stackoverflow.com/a/2709523/895589
+    private static int countBits(long i)
+    {
+        i = i - ((i >> 1) & 0x5555555555555555);
         i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);
         return (int)((((i + (i >> 4)) & 0xF0F0F0F0F0F0F0F) * 0x101010101010101) >> 56);
     }
 
-    //indicating whether the ModuleSet is read-only
     public bool IsReadOnly
     {
         get
@@ -263,7 +241,6 @@ public class ModuleSet : ICollection<Module>
         }
     }
 
-    //Copies the elements of the ModuleSet to an array, starting at a particular index
     public void CopyTo(Module[] array, int arrayIndex)
     {
         foreach (var item in this)
@@ -273,15 +250,12 @@ public class ModuleSet : ICollection<Module>
         }
     }
 
-
-    //Provides an enumerator for iterating over the modules represented by the bit-packed data
     public IEnumerator<Module> GetEnumerator()
     {
         int index = 0;
         for (int i = 0; i < this.data.Length; i++)
         {
             long value = this.data[i];
-
             if (value == 0)
             {
                 index += bitsPerItem;
@@ -289,33 +263,31 @@ public class ModuleSet : ICollection<Module>
             }
             for (int j = 0; j < bitsPerItem; j++)
             {
-                if ((value & ((long)1 << j)) != 0) // Check if the bit is set
+                if ((value & ((long)1 << j)) != 0)
                 {
-                    yield return ModuleData.current[index]; // Yield return the corresponding module
+                    yield return ModuleData.Current[index];
                 }
-                index++; // Move to the next index
-                if (index >= ModuleData.current.Length)
+                index++;
+                if (index >= ModuleData.Current.Length)
                 {
-                    yield break; // Exit the loop if the end of the module data is reached
+                    yield break;
                 }
             }
         }
     }
 
-
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return this.GetEnumerator();
+        return (IEnumerator)this.GetEnumerator();
     }
 
-    //Calculate the entropy of a collection of modules.
-    private float CalculateEntropy()
+    private float calculateEntropy()
     {
         float total = 0;
         float entropySum = 0;
         foreach (var module in this)
         {
-            total += module.prefab.probability;
+            total += module.Prototype.Probability;
             entropySum += module.PLogP;
         }
         return -1f / total * entropySum + Mathf.Log(total);

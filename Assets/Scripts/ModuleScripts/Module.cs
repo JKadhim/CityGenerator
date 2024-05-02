@@ -1,62 +1,78 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using System;
+using System.Linq;
+using UnityEditor;
 
 [System.Serializable]
-//Represents a module, which is a piece of content used in map generation.
 public class Module
 {
-    public string name;
-    public ModulePrefab prefab;
+    public string Name;
 
-    public GameObject prefabObject;
+    public ModulePrototype Prototype;
+    public GameObject Prefab;
 
-    public int rotation;
+    public int Rotation;
 
-    public ModuleSet[] possibleNeighbours;
-
-    public Module[][] possibleNeighboursArray;
+    public ModuleSet[] PossibleNeighbors;
+    public Module[][] PossibleNeighborsArray;
 
     [HideInInspector]
-    public int index;
+    public int Index;
 
-    // The product of the module's probability and the logarithm of its probability
+    // This is precomputed to make entropy calculation faster
     public float PLogP;
 
     public Module(GameObject prefab, int rotation, int index)
     {
-        this.rotation = rotation;
-        this.index = index;
-        this.prefabObject = prefab;
-        this.prefab = this.prefabObject.GetComponent<ModulePrefab>();
-        this.name = this.prefab.gameObject.name + " R" + rotation;
-        this.PLogP = this.prefab.probability * Mathf.Log(this.prefab.probability);
+        this.Rotation = rotation;
+        this.Index = index;
+        this.Prefab = prefab;
+        this.Prototype = this.Prefab.GetComponent<ModulePrototype>();
+        this.Name = this.Prototype.gameObject.name + " R" + rotation;
+        this.PLogP = this.Prototype.Probability * Mathf.Log(this.Prototype.Probability);
     }
 
-    // Checks if this module fits with another module based on a specified direction and the other module
     public bool Fits(int direction, Module module)
     {
-        int otherDirection = (direction + 2) % 4;
+        int otherDirection = (direction + 3) % 6;
 
-        var f1 = this.prefab.Faces[Directions.Rotate(direction, this.rotation)] as ModulePrefab.HorizontalFaceDetails;
-        var f2 = module.prefab.Faces[Directions.Rotate(otherDirection, module.rotation)] as ModulePrefab.HorizontalFaceDetails;
-        return f1.connector == f2.connector && (f1.symmetric || f1.flipped != f2.flipped);
+        if (Orientations.IsHorizontal(direction))
+        {
+            var f1 = this.Prototype.Faces[Orientations.Rotate(direction, this.Rotation)] as ModulePrototype.HorizontalFaceDetails;
+            var f2 = module.Prototype.Faces[Orientations.Rotate(otherDirection, module.Rotation)] as ModulePrototype.HorizontalFaceDetails;
+            return f1.Connector == f2.Connector && (f1.Symmetric || f1.Flipped != f2.Flipped);
+        }
+        else
+        {
+            var f1 = this.Prototype.Faces[direction] as ModulePrototype.VerticalFaceDetails;
+            var f2 = module.Prototype.Faces[otherDirection] as ModulePrototype.VerticalFaceDetails;
+            return f1.Connector == f2.Connector && (f1.Invariant || (f1.Rotation + this.Rotation) % 4 == (f2.Rotation + module.Rotation) % 4);
+        }
     }
 
-    // Checks if this module fits with another module based on a specified direction and connector
     public bool Fits(int direction, int connector)
     {
-        var f = this.GetFace(direction) as ModulePrefab.HorizontalFaceDetails;
-        return f.connector == connector;
+        if (Orientations.IsHorizontal(direction))
+        {
+            var f = this.GetFace(direction) as ModulePrototype.HorizontalFaceDetails;
+            return f.Connector == connector;
+        }
+        else
+        {
+            var f = this.Prototype.Faces[direction] as ModulePrototype.VerticalFaceDetails;
+            return f.Connector == connector;
+        }
     }
 
-    // Gets the face details of the module for a specified direction
-    public ModulePrefab.FaceDetails GetFace(int direction)
+    public ModulePrototype.FaceDetails GetFace(int direction)
     {
-        return this.prefab.Faces[Directions.Rotate(direction, this.rotation)];
+        return this.Prototype.Faces[Orientations.Rotate(direction, this.Rotation)];
     }
 
-    // Overrides the ToString method to return the name of the module
     public override string ToString()
     {
-        return this.name;
+        return this.Name;
     }
 }

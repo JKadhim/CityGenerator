@@ -1,69 +1,109 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
-
-
-//TilingMap class represents a map consisting of a grid of slots in a 3D space. 
-//Inherits from Map.
-
-public class TilingMap : Map
+/// <summary>
+/// A finite sized map that uses horizontal world wrapping.
+/// That means you can horizontally tile copies of this map and the edges will match
+/// </summary>
+public class TilingMap : AbstractMap
 {
-    public readonly Vector3Int size;
+    public readonly Vector3Int Size;
 
-    // The grid of slots in the map
     private readonly Slot[,,] slots;
 
     public TilingMap(Vector3Int size) : base()
     {
-        this.size = size;
-        slots = new Slot[size.x, size.y, size.z];
+        this.Size = size;
+        this.slots = new Slot[size.x, size.y, size.z];
 
-        // Loop through each coordinate in the 3D grid
         for (int x = 0; x < size.x; x++)
         {
             for (int y = 0; y < size.y; y++)
             {
                 for (int z = 0; z < size.z; z++)
                 {
-                    // Create a new Slot object at the current coordinate
-                    // and assign it to the corresponding position in the slots array
-                    slots[x, y, z] = new Slot(new Vector3Int(x, y, z), this);
+                    this.slots[x, y, z] = new Slot(new Vector3Int(x, y, z), this);
                 }
             }
         }
     }
 
-    // Override method to get a slot at a specific position
     public override Slot GetSlot(Vector3Int position)
     {
-        // Check if the y-coordinate is out of bounds
-        if (position.y < 0 || position.y >= size.y)
+        if (position.y < 0 || position.y >= this.Size.y)
         {
             return null;
         }
-        // Calculate the wrapped coordinates for x and z dimensions
-        int xWrapped = position.x % size.x + (position.x % size.x < 0 ? size.x : 0);
-        int zWrapped = position.z % size.z + (position.z % size.z < 0 ? size.z : 0);
-
-        return slots[xWrapped, position.y, zWrapped];
+        return this.slots[
+            position.x % this.Size.x + (position.x % this.Size.x < 0 ? this.Size.x : 0),
+            position.y,
+            position.z % this.Size.z + (position.z % this.Size.z < 0 ? this.Size.z : 0)];
     }
 
-    // Override method to get all slots in the map
     public override IEnumerable<Slot> GetAllSlots()
     {
-        // Iterate through each coordinate in the 3D grid
-        for (int x = 0; x < size.x; x++)
+        for (int x = 0; x < this.Size.x; x++)
         {
-            for (int y = 0; y < size.y; y++)
+            for (int y = 0; y < this.Size.y; y++)
             {
-                for (int z = 0; z < size.z; z++)
+                for (int z = 0; z < this.Size.z; z++)
                 {
-                    // Yield return each slot in the slots array
-                    yield return slots[x, y, z];
+                    yield return this.slots[x, y, z];
                 }
             }
         }
     }
 
-    public override void ApplyBoundaryConstraints(IEnumerable<BoundaryConstraint> constraints){}
+    public override void ApplyBoundaryConstraints(IEnumerable<BoundaryConstraint> constraints)
+    {
+        foreach (var constraint in constraints)
+        {
+            int y = constraint.RelativeY;
+            if (y < 0)
+            {
+                y += this.Size.y;
+            }
+            switch (constraint.Direction)
+            {
+                case BoundaryConstraint.ConstraintDirection.Up:
+                    for (int x = 0; x < this.Size.x; x++)
+                    {
+                        for (int z = 0; z < this.Size.z; z++)
+                        {
+                            if (constraint.Mode == BoundaryConstraint.ConstraintMode.EnforceConnector)
+                            {
+                                this.GetSlot(new Vector3Int(x, this.Size.y - 1, z)).EnforceConnector(4, constraint.Connector);
+                            }
+                            else
+                            {
+                                this.GetSlot(new Vector3Int(x, this.Size.y - 1, z)).ExcludeConnector(4, constraint.Connector);
+                            }
+                        }
+                    }
+                    break;
+                case BoundaryConstraint.ConstraintDirection.Down:
+                    for (int x = 0; x < this.Size.x; x++)
+                    {
+                        for (int z = 0; z < this.Size.z; z++)
+                        {
+                            if (constraint.Mode == BoundaryConstraint.ConstraintMode.EnforceConnector)
+                            {
+                                this.GetSlot(new Vector3Int(x, 0, z)).EnforceConnector(1, constraint.Connector);
+                            }
+                            else
+                            {
+                                this.GetSlot(new Vector3Int(x, 0, z)).ExcludeConnector(1, constraint.Connector);
+                            }
+                        }
+                    }
+                    break;
+                case BoundaryConstraint.ConstraintDirection.Horizontal:
+                    // Horizontal constraints are ignored
+                    break;
+            }
+        }
+    }
 }

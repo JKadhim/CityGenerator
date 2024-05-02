@@ -1,90 +1,94 @@
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using System.Linq;
 
-// This class manages data required for editing module prefabs.
-public class ModulePrefabEditorData
+public class ModulePrototypeEditorData
 {
-    public readonly ModulePrefab modulePrefab;
+    public readonly ModulePrototype ModulePrototype;
 
-    private readonly ModulePrefab[] prefabs;
+    private readonly ModulePrototype[] prototypes;
 
-    private readonly Dictionary<ModulePrefab, Mesh> meshes;
+    private readonly Dictionary<ModulePrototype, Mesh> meshes;
 
-    public readonly struct ConnectorHint
+    public struct ConnectorHint
     {
-        public readonly Mesh mesh;
-        public readonly int rotation;
+        public readonly Mesh Mesh;
+        public readonly int Rotation;
 
         public ConnectorHint(int rotation, Mesh mesh)
         {
-            this.rotation = rotation;
-            this.mesh = mesh;
+            this.Rotation = rotation;
+            this.Mesh = mesh;
         }
     }
 
-    public ModulePrefabEditorData(ModulePrefab modulePrefab)
+    public ModulePrototypeEditorData(ModulePrototype modulePrototype)
     {
-        this.modulePrefab = modulePrefab;
-        this.prefabs = modulePrefab.transform.parent.GetComponentsInChildren<ModulePrefab>();
-        this.meshes = new Dictionary<ModulePrefab, Mesh>();
+        this.ModulePrototype = modulePrototype;
+        this.prototypes = modulePrototype.transform.parent.GetComponentsInChildren<ModulePrototype>();
+        this.meshes = new Dictionary<ModulePrototype, Mesh>();
     }
 
-    // Retrieves the mesh for a given module prefabObject, caching it if necessary.
-    private Mesh GetMesh(ModulePrefab modulePrefab)
+    private Mesh getMesh(ModulePrototype modulePrototype)
     {
-        if (this.meshes.ContainsKey(modulePrefab))
+        if (this.meshes.ContainsKey(modulePrototype))
         {
-            return this.meshes[modulePrefab];
+            return this.meshes[modulePrototype];
         }
-        var mesh = modulePrefab.GetMesh(false);
-        this.meshes[modulePrefab] = mesh;
+        var mesh = modulePrototype.GetMesh(false);
+        this.meshes[modulePrototype] = mesh;
         return mesh;
     }
 
-    // Retrieves the connector hint for a given direction.
     public ConnectorHint GetConnectorHint(int direction)
     {
-        var face = this.modulePrefab.Faces[direction];
-
-        // Check if the face is a horizontal face.
-        if (face is ModulePrefab.HorizontalFaceDetails)
+        var face = this.ModulePrototype.Faces[direction];
+        if (face is ModulePrototype.HorizontalFaceDetails)
         {
-            var horizontalFace = face as ModulePrefab.HorizontalFaceDetails;
+            var horizontalFace = face as ModulePrototype.HorizontalFaceDetails;
 
-            // Iterate through all module prefabs in the scene.
-            foreach (var prefab in this.prefabs)
+            foreach (var prototype in this.prototypes)
             {
-                // Skip the current module prefabObject or if it's excluded from being a neighbor.
-                if (prefab == this.modulePrefab || face.excludedNeighbours.Contains(prefab))
+                if (prototype == this.ModulePrototype || face.ExcludedNeighbours.Contains(prototype))
                 {
                     continue;
                 }
-
-                // Check rotations of the other module prefabObject to find a matching connector.
                 for (int rotation = 0; rotation < 4; rotation++)
                 {
-                    // Get the face details of the other module prefabObject at the rotated direction.
-                    var otherFace = prefab.Faces[Directions.Rotate(direction, rotation + 2)] as ModulePrefab.HorizontalFaceDetails;
-
-                    // Skip if the other module prefabObject excludes the current module prefabObject.
-                    if (otherFace.excludedNeighbours.Contains(this.modulePrefab))
+                    var otherFace = prototype.Faces[Orientations.Rotate(direction, rotation + 2)] as ModulePrototype.HorizontalFaceDetails;
+                    if (otherFace.ExcludedNeighbours.Contains(this.ModulePrototype))
                     {
                         continue;
                     }
-
-                    // Check if the connectors match and if the faces are compatible.
-                    if (otherFace.connector == face.connector && ((horizontalFace.symmetric && otherFace.symmetric) || otherFace.flipped != horizontalFace.flipped))
+                    if (otherFace.Connector == face.Connector && ((horizontalFace.Symmetric && otherFace.Symmetric) || otherFace.Flipped != horizontalFace.Flipped))
                     {
-                        // Return the connector hint with the rotation and associated mesh.
-                        return new ConnectorHint(rotation, this.GetMesh(prefab));
+                        return new ConnectorHint(rotation, this.getMesh(prototype));
                     }
                 }
             }
         }
-        // If no suitable connector hint is found, return an empty hint.
+
+        if (face is ModulePrototype.VerticalFaceDetails)
+        {
+            var verticalFace = face as ModulePrototype.VerticalFaceDetails;
+
+            foreach (var prototype in this.prototypes)
+            {
+                if (prototype == this.ModulePrototype || face.ExcludedNeighbours.Contains(prototype))
+                {
+                    continue;
+                }
+                var otherFace = prototype.Faces[(direction + 3) % 6] as ModulePrototype.VerticalFaceDetails;
+                if (otherFace.ExcludedNeighbours.Contains(this.ModulePrototype) || otherFace.Connector != face.Connector)
+                {
+                    continue;
+                }
+
+                return new ConnectorHint(verticalFace.Rotation - otherFace.Rotation, this.getMesh(prototype));
+            }
+        }
+
         return new ConnectorHint();
     }
-
 }
-

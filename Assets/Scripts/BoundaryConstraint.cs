@@ -1,23 +1,25 @@
-[System.Serializable]
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
-//BoundaryConstraint class represents a constraint applied to the boundaries of a map.
+[System.Serializable]
 public class BoundaryConstraint
 {
-    // Enum specifying how the constraint is applied
     public enum ConstraintMode
     {
-        EnforceConnector, // Enforces the presence of a connector
-        ExcludeConnector  // Excludes the presence of a connector
+        EnforceConnector,
+        ExcludeConnector
     }
 
-    // Enum specifying the direction of the constraint
     public enum ConstraintDirection
     {
-        Horizontal  // Currently only supports horizontal constraints
+        Up,
+        Down,
+        Horizontal
     }
 
-    public int relativeY = 0;
-    public ConstraintDirection direction;
-    public ConstraintMode mode;
-    public int connector;
+    public int RelativeY = 0;
+    public ConstraintDirection Direction;
+    public ConstraintMode Mode;
+    public int Connector;
 }

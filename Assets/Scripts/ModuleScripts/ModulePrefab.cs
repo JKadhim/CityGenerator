@@ -1,164 +1,189 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using System.Linq;
+using System;
 
-public class ModulePrefab : MonoBehaviour
+public class ModulePrototype : MonoBehaviour
 {
     [System.Serializable]
-    // Abstract class representing details of a face
     public abstract class FaceDetails
     {
-        public bool walkable;
-        public int connector;
+        public bool Walkable;
 
-        // Reset connector to default value
+        public int Connector;
+
         public virtual void ResetConnector()
         {
-            this.connector = 0;
+            this.Connector = 0;
         }
 
-        public ModulePrefab[] excludedNeighbours;
-        public bool enforceWalkableNeighbor = false;
+        public ModulePrototype[] ExcludedNeighbours;
+
+        public bool EnforceWalkableNeighbor = false;
+
+        public bool IsOcclusionPortal = false;
     }
 
-    // Serializable class representing horizontal face details
     [System.Serializable]
     public class HorizontalFaceDetails : FaceDetails
     {
-        public bool symmetric;
-        public bool flipped;
+        public bool Symmetric;
+        public bool Flipped;
 
-        // Convert face details to string representation
         public override string ToString()
         {
-            string temp = flipped ? "F" : "";
-            return this.connector.ToString() + (this.symmetric ? "s" : temp);
+            return this.Connector.ToString() + (this.Symmetric ? "s" : (this.Flipped ? "F" : ""));
         }
 
-        // Reset connector and additional details
         public override void ResetConnector()
         {
             base.ResetConnector();
-            this.symmetric = false;
-            this.flipped = false;
+            this.Symmetric = false;
+            this.Flipped = false;
         }
     }
 
-    public float probability = 1.0f;
-    public bool spawn = true;
-    public bool isInterior = false;
-    public bool isVertical = false;
+    [System.Serializable]
+    public class VerticalFaceDetails : FaceDetails
+    {
+        public bool Invariant;
+        public int Rotation;
+
+        public override string ToString()
+        {
+            return this.Connector.ToString() + (this.Invariant ? "i" : (this.Rotation != 0 ? "_bcd".ElementAt(this.Rotation).ToString() : ""));
+        }
+
+        public override void ResetConnector()
+        {
+            base.ResetConnector();
+            this.Invariant = false;
+            this.Rotation = 0;
+        }
+    }
+
+    public float Probability = 1.0f;
+    public bool Spawn = true;
+    public bool IsInterior = false;
 
     public HorizontalFaceDetails Left;
+    public VerticalFaceDetails Down;
     public HorizontalFaceDetails Back;
     public HorizontalFaceDetails Right;
+    public VerticalFaceDetails Up;
     public HorizontalFaceDetails Forward;
 
-    // Get an array of all face details
     public FaceDetails[] Faces
     {
         get
         {
             return new FaceDetails[] {
-                this.Forward,
                 this.Left,
+                this.Down,
                 this.Back,
-                this.Right
+                this.Right,
+                this.Up,
+                this.Forward
             };
         }
     }
 
-
-    // Method to get the mesh of the GameObject
     public Mesh GetMesh(bool createEmptyFallbackMesh = true)
     {
         var meshFilter = this.GetComponent<MeshFilter>();
-        // If mesh filter exists and has a shared mesh, return it
         if (meshFilter != null && meshFilter.sharedMesh != null)
         {
             return meshFilter.sharedMesh;
         }
-        // If createEmptyFallbackMesh is true, create and return an empty mesh
         if (createEmptyFallbackMesh)
         {
             var mesh = new Mesh();
             return mesh;
         }
-        // If createEmptyFallbackMesh is false and no mesh found, return null
         return null;
     }
 
-
 #if UNITY_EDITOR
-    private static ModulePrefabEditorData editorData;
+    private static ModulePrototypeEditorData editorData;
     private static GUIStyle style;
 
     [DrawGizmo(GizmoType.InSelectionHierarchy | GizmoType.NotInSelectionHierarchy)]
-    static void DrawGizmo(ModulePrefab modulePrefab, GizmoType gizmoType)
+    static void DrawGizmo(ModulePrototype modulePrototype, GizmoType gizmoType)
     {
-        var transform = modulePrefab.transform;
+        var transform = modulePrototype.transform;
         Vector3 position = transform.position;
         var rotation = transform.rotation;
 
-        if (ModulePrefab.editorData == null || ModulePrefab.editorData.modulePrefab != modulePrefab)
+        if (ModulePrototype.editorData == null || ModulePrototype.editorData.ModulePrototype != modulePrototype)
         {
-            ModulePrefab.editorData = new ModulePrefabEditorData(modulePrefab);
+            ModulePrototype.editorData = new ModulePrototypeEditorData(modulePrototype);
         }
 
         Gizmos.color = new Color(1f, 1f, 1f, 0.3f);
         if ((gizmoType & GizmoType.Selected) != 0)
         {
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 6; i++)
             {
-                var hint = ModulePrefab.editorData.GetConnectorHint(i);
-                if (hint.mesh != null)
+                var hint = ModulePrototype.editorData.GetConnectorHint(i);
+                if (hint.Mesh != null)
                 {
-                    Vector3 scaleTemp = new Vector3(2, 1, 2);
-                    Gizmos.DrawMesh(hint.mesh,
-                        position + rotation * Directions.Direction[i].ToVector3() * Map.BLOCK_SIZE,
-                        rotation * Quaternion.Euler(90f * hint.rotation * Vector3.up), scaleTemp);
+                    Gizmos.DrawMesh(hint.Mesh,
+                        position + rotation * Orientations.Direction[i].ToVector3() * AbstractMap.BLOCK_SIZE,
+                        rotation * Quaternion.Euler(Vector3.up * 90f * hint.Rotation));
                 }
             }
         }
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 6; i++)
         {
-            if (modulePrefab.Faces[i].walkable)
+            if (modulePrototype.Faces[i].Walkable)
             {
                 Gizmos.color = Color.red;
-                Gizmos.DrawLine(position + Vector3.down * 0.1f, position + rotation * Directions.Rotations[i] * Vector3.forward * Map.BLOCK_SIZE * 0.5f + Vector3.down * 0.1f);
+                Gizmos.DrawLine(position + Vector3.down * 0.1f, position + rotation * Orientations.Rotations[i] * Vector3.forward * AbstractMap.BLOCK_SIZE * 0.5f + Vector3.down * 0.1f);
+            }
+            if (modulePrototype.Faces[i].IsOcclusionPortal)
+            {
+                Gizmos.color = Color.blue;
+
+                var dir = rotation * Orientations.Rotations[i] * Vector3.forward;
+                Gizmos.DrawWireCube(position + dir, (Vector3.one - new Vector3(Mathf.Abs(dir.x), Mathf.Abs(dir.y), Mathf.Abs(dir.z))) * AbstractMap.BLOCK_SIZE);
             }
         }
 
-        ModulePrefab.style ??= new GUIStyle
-            {
-                alignment = TextAnchor.MiddleCenter
-            };
-
-        ModulePrefab.style.normal.textColor = Color.black;
-        for (int i = 0; i < 4; i++)
+        if (ModulePrototype.style == null)
         {
-            var face = modulePrefab.Faces[i];
-            Handles.Label(position + rotation * Directions.Rotations[i] * Vector3.forward * InfiniteMap.BLOCK_SIZE / 2f, face.ToString(), ModulePrefab.style);
+            ModulePrototype.style = new GUIStyle();
+            ModulePrototype.style.alignment = TextAnchor.MiddleCenter;
+        }
+
+        ModulePrototype.style.normal.textColor = Color.black;
+        for (int i = 0; i < 6; i++)
+        {
+            var face = modulePrototype.Faces[i];
+            Handles.Label(position + rotation * Orientations.Rotations[i] * Vector3.forward * InfiniteMap.BLOCK_SIZE / 2f, face.ToString(), ModulePrototype.style);
         }
     }
 #endif
 
-    // Method to compare rotated variants of the module
     public bool CompareRotatedVariants(int r1, int r2)
     {
+        if (!(this.Faces[Orientations.UP] as VerticalFaceDetails).Invariant || !(this.Faces[Orientations.DOWN] as VerticalFaceDetails).Invariant)
+        {
+            return false;
+        }
+
         for (int i = 0; i < 4; i++)
         {
-            // Get faces for rotation r1 and r2
-            var face1 = this.Faces[Directions.Rotate(Directions.PossibleDirections[i], r1)] as HorizontalFaceDetails;
-            var face2 = this.Faces[Directions.Rotate(Directions.PossibleDirections[i], r2)] as HorizontalFaceDetails;
+            var face1 = this.Faces[Orientations.Rotate(Orientations.HorizontalDirections[i], r1)] as HorizontalFaceDetails;
+            var face2 = this.Faces[Orientations.Rotate(Orientations.HorizontalDirections[i], r2)] as HorizontalFaceDetails;
 
-            // Compare connectors
-            if (face1.connector != face2.connector)
+            if (face1.Connector != face2.Connector)
             {
                 return false;
             }
 
-            // If both faces are not symmetric and flipped state is different, return false
-            if (!face1.symmetric && !face2.symmetric && face1.flipped != face2.flipped)
+            if (!face1.Symmetric && !face2.Symmetric && face1.Flipped != face2.Flipped)
             {
                 return false;
             }
@@ -167,19 +192,20 @@ public class ModulePrefab : MonoBehaviour
         return true;
     }
 
-    // Method to reset the module details
+    void Update() { }
+
     void Reset()
     {
-        // InitializeMap face details
-        this.Forward = new HorizontalFaceDetails();
-        this.Back = new HorizontalFaceDetails();
+        this.Up = new VerticalFaceDetails();
+        this.Down = new VerticalFaceDetails();
         this.Right = new HorizontalFaceDetails();
         this.Left = new HorizontalFaceDetails();
+        this.Forward = new HorizontalFaceDetails();
+        this.Back = new HorizontalFaceDetails();
 
-        // Reset excluded neighbours for all faces
         foreach (var face in this.Faces)
         {
-            face.excludedNeighbours = new ModulePrefab[] { };
+            face.ExcludedNeighbours = new ModulePrototype[] { };
         }
     }
 }

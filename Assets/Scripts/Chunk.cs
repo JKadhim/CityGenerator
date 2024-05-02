@@ -1,106 +1,101 @@
+using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-
-
-//Represents a chunk of the map
 
 public class Chunk
 {
-    public readonly Bounds bounds;
+    public readonly Bounds Bounds;
 
-    public List<Renderer> renderers;
-    public List<GameObject> gameObjects;
-    public List<Room> rooms;
+    public List<Renderer> Renderers;
+    public List<GameObject> GameObjects;
+    public List<Room> Rooms;
 
-    // Dictionary to store renderers by position for efficient access
-    private readonly Dictionary<Vector3Int, Renderer[]> renderersByPosition;
+    private Dictionary<Vector3Int, Renderer[]> renderersByPosition;
 
-    // Indicates whether exterior blocks are visible
-    public bool exteriorBlocksVisible = true;
-
-    // Indicates whether the chunk is in render range
-    public bool InRenderRange { get; private set; }
+    public bool ExteriorBlocksVisible = true;
+    public bool InRenderRange
+    {
+        get;
+        private set;
+    }
 
     public Chunk(Bounds bounds)
     {
-        this.bounds = bounds;
-        renderers = new List<Renderer>();
-        rooms = new List<Room>();
-        renderersByPosition = new Dictionary<Vector3Int, Renderer[]>();
-        gameObjects = new List<GameObject>();
-        InRenderRange = true;
+        this.Bounds = bounds;
+        this.Renderers = new List<Renderer>();
+        this.Rooms = new List<Room>();
+        this.renderersByPosition = new Dictionary<Vector3Int, Renderer[]>();
+        this.GameObjects = new List<GameObject>();
+        this.InRenderRange = true;
     }
 
-    // Sets the in render range flag and updates the visibility of game objects and slots accordingly
     public void SetInRenderRange(bool value)
     {
-        InRenderRange = value;
-        foreach (var gameObject in gameObjects)
+        this.InRenderRange = value;
+        foreach (var gameObject in this.GameObjects)
         {
             gameObject.SetActive(value);
         }
-        foreach (var room in rooms)
+        // This only works for small rooms.
+        // It will fail if a room has blocks outside the render range and close to the player. 
+        foreach (var room in this.Rooms)
         {
             foreach (var slot in room.Slots)
             {
-                slot.gameObject.SetActive(value);
+                slot.GameObject.SetActive(value);
             }
         }
     }
 
-    // Sets the visibility of exterior blocks
     public void SetExteriorVisibility(bool value)
     {
-        if (exteriorBlocksVisible == value)
+        if (this.ExteriorBlocksVisible == value)
         {
             return;
         }
-        foreach (var renderer in renderers)
+        foreach (var renderer in this.Renderers)
         {
             renderer.shadowCastingMode = value ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
         }
-        exteriorBlocksVisible = value;
+        this.ExteriorBlocksVisible = value;
     }
 
-    // Sets the visibility of rooms
     public void SetRoomVisibility(bool value)
     {
-        foreach (var room in rooms)
+        foreach (var room in this.Rooms)
         {
             room.SetVisibility(value);
         }
     }
 
-    // Adds a block (slot) to the chunk
     public void AddBlock(Slot slot)
     {
-        if (renderersByPosition.ContainsKey(slot.position))
+        if (this.renderersByPosition.ContainsKey(slot.Position))
         {
-            foreach (var renderer in renderersByPosition[slot.position])
+            foreach (var renderer in this.renderersByPosition[slot.Position])
             {
-                renderers.Remove(renderer);
+                this.Renderers.Remove(renderer);
             }
         }
-        var renderersVar = slot.gameObject.GetComponentsInChildren<Renderer>();
-        renderersByPosition[slot.position] = renderersVar;
-        renderers.AddRange(renderersVar);
-        exteriorBlocksVisible = true;
-        gameObjects.Add(slot.gameObject);
-        slot.gameObject.SetActive(InRenderRange);
+        var renderers = slot.GameObject.GetComponentsInChildren<Renderer>();
+        this.renderersByPosition[slot.Position] = renderers;
+        this.Renderers.AddRange(renderers);
+        this.ExteriorBlocksVisible = true;
+        this.GameObjects.Add(slot.GameObject);
+        slot.GameObject.SetActive(this.InRenderRange);
     }
 
-    // Removes a block (slot) from the chunk
     public void RemoveBlock(Slot slot)
     {
-        if (!renderersByPosition.ContainsKey(slot.position))
+        if (!this.renderersByPosition.ContainsKey(slot.Position))
         {
             return;
         }
-        foreach (var renderer in renderersByPosition[slot.position])
+        foreach (var renderer in this.renderersByPosition[slot.Position])
         {
-            renderers.Remove(renderer);
+            this.Renderers.Remove(renderer);
         }
-        gameObjects.Remove(slot.gameObject);
+        this.GameObjects.Remove(slot.GameObject);
     }
 }
-

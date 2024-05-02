@@ -1,159 +1,137 @@
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using System.Linq;
+using System;
 
 public class MapBehaviour : MonoBehaviour
 {
-    public InfiniteMap map;
+    public InfiniteMap Map;
 
-    public int mapHeight = 8;
+    public int MapHeight = 6;
 
-    public BoundaryConstraint[] boundaryConstraints;
+    public BoundaryConstraint[] BoundaryConstraints;
 
-    public bool applyBoundaryConstraints = true;
+    public bool ApplyBoundaryConstraints = true;
 
-    public ModuleData moduleData;
+    public ModuleData ModuleData;
 
     private CullingData cullingData;
 
-    // Method to get world space position from map position
-    public Vector3 GetWorldSpacePosition(Vector3Int position)
+    public Vector3 GetWorldspacePosition(Vector3Int position)
     {
         return this.transform.position
             + Vector3.up * InfiniteMap.BLOCK_SIZE / 2f
             + position.ToVector3() * InfiniteMap.BLOCK_SIZE;
     }
 
-    // Method to get map position from world space position
     public Vector3Int GetMapPosition(Vector3 worldSpacePosition)
     {
         var pos = (worldSpacePosition - this.transform.position) / InfiniteMap.BLOCK_SIZE;
         return Vector3Int.FloorToInt(pos + new Vector3(0.5f, 0, 0.5f));
     }
 
-    // Method to clear the map and associated game objects
-    public void ClearMap()
+    public void Clear()
     {
-        // Collect all child transforms
         var children = new List<Transform>();
         foreach (Transform child in this.transform)
         {
             children.Add(child);
         }
-        // Destroy all child game objects
         foreach (var child in children)
         {
             GameObject.DestroyImmediate(child.gameObject);
         }
-        // Reset map reference
-        this.map = null;
+        this.Map = null;
     }
 
-    // Method to initialize the map
-    public void InitializeMap()
+    public void Initialize()
     {
-        // Set current module data to module list
-        ModuleData.current = this.moduleData.modules;
-        
-        // ClearMap existing map and create a new InfiniteMap instance
-        this.ClearMap();
-
-        this.map = new InfiniteMap(this.mapHeight);
-        // Apply boundary constraints if specified
-        if (this.applyBoundaryConstraints && this.boundaryConstraints != null && this.boundaryConstraints.Any())
+        ModuleData.Current = this.ModuleData.Modules;
+        this.Clear();
+        this.Map = new InfiniteMap(this.MapHeight);
+        if (this.ApplyBoundaryConstraints && this.BoundaryConstraints != null && this.BoundaryConstraints.Any())
         {
-            this.map.ApplyBoundaryConstraints(this.boundaryConstraints);
+            this.Map.ApplyBoundaryConstraints(this.BoundaryConstraints);
         }
-        // InitializeMap culling data component
         this.cullingData = this.GetComponent<CullingData>();
         this.cullingData.Initialize();
     }
 
-
-    // Property to check if the map is initialized
     public bool Initialized
     {
         get
         {
-            return this.map != null;
+            return this.Map != null;
         }
     }
 
     public void Update()
     {
-        // If map is not initialized or build queue is null, return
-        if (this.map == null || this.map.buildQueue == null)
+        if (this.Map == null || this.Map.BuildQueue == null)
         {
             return;
         }
 
-        // Process a limited number of items from the build queue each frame
         int itemsLeft = 50;
-        while (this.map.buildQueue.Count != 0 && itemsLeft > 0)
+
+        while (this.Map.BuildQueue.Count != 0 && itemsLeft > 0)
         {
-            var slot = this.map.buildQueue.Peek();
+            var slot = this.Map.BuildQueue.Peek();
             if (slot == null)
             {
                 return;
             }
-            // Build the slot and decrement the items left counter
             if (this.BuildSlot(slot))
             {
                 itemsLeft--;
             }
-            this.map.buildQueue.Dequeue();
+            this.Map.BuildQueue.Dequeue();
         }
-
-        // ClearMap outdated slots in the culling data
         this.cullingData.ClearOutdatedSlots();
     }
 
-    // Method to build a slot
     public bool BuildSlot(Slot slot)
     {
-        // If slot's game object exists, remove it from culling data and destroy it
-        if (slot.gameObject != null)
+        if (slot.GameObject != null)
         {
             this.cullingData.RemoveSlot(slot);
 #if UNITY_EDITOR
-            GameObject.DestroyImmediate(slot.gameObject);
+            GameObject.DestroyImmediate(slot.GameObject);
 #else
-            GameObject.Destroy(slot.GameObject);
+			GameObject.Destroy(slot.GameObject);
 #endif
         }
 
-        // If slot is not collapsed or its module should not spawn, return false
-        if (!slot.Collapsed || !slot.module.prefab.spawn)
+        if (!slot.Collapsed || slot.Module.Prototype.Spawn == false)
         {
+            return false;
+        }
+        var module = slot.Module;
+        if (module == null)
+        { // Can be null due to race conditions
             return false;
         }
 
-        // Instantiate the module's game object, set its position and rotation, and add it to culling data
-        var module = slot.module;
-        if (module == null)
-        {
-            return false;
-        }
-        var gameObject = GameObject.Instantiate(module.prefab.gameObject);
-        gameObject.name = module.prefab.gameObject.name + " " + slot.position;
-        GameObject.DestroyImmediate(gameObject.GetComponent<ModulePrefab>());
+        var gameObject = GameObject.Instantiate(module.Prototype.gameObject);
+        gameObject.name = module.Prototype.gameObject.name + " " + slot.Position;
+        GameObject.DestroyImmediate(gameObject.GetComponent<ModulePrototype>());
         gameObject.transform.parent = this.transform;
-        gameObject.transform.SetPositionAndRotation(this.GetWorldSpacePosition(slot.position), Quaternion.Euler(90f * module.rotation * Vector3.up));
-        slot.gameObject = gameObject;
+        gameObject.transform.position = this.GetWorldspacePosition(slot.Position);
+        gameObject.transform.rotation = Quaternion.Euler(Vector3.up * 90f * module.Rotation);
+        slot.GameObject = gameObject;
         this.cullingData.AddSlot(slot);
         return true;
     }
 
-    // Method to build all slots in the build queue
     public void BuildAllSlots()
     {
-        while (this.map.buildQueue.Count != 0)
+        while (this.Map.BuildQueue.Count != 0)
         {
-            this.BuildSlot(this.map.buildQueue.Dequeue());
+            this.BuildSlot(this.Map.BuildQueue.Dequeue());
         }
     }
-
 
     public bool VisualizeSlots = false;
 
@@ -165,17 +143,17 @@ public class MapBehaviour : MonoBehaviour
         {
             return;
         }
-        if (mapBehaviour.map == null)
+        if (mapBehaviour.Map == null)
         {
             return;
         }
-        foreach (var slot in mapBehaviour.map.GetAllSlots())
+        foreach (var slot in mapBehaviour.Map.GetAllSlots())
         {
-            if (slot.Collapsed || slot.modules.Count == ModuleData.current.Length)
+            if (slot.Collapsed || slot.Modules.Count == ModuleData.Current.Length)
             {
                 continue;
             }
-            Handles.Label(mapBehaviour.GetWorldSpacePosition(slot.position), slot.modules.Count.ToString());
+            Handles.Label(mapBehaviour.GetWorldspacePosition(slot.Position), slot.Modules.Count.ToString());
         }
     }
 #endif

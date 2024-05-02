@@ -4,7 +4,7 @@ using UnityEngine;
 //Represents an area selector used for selecting an area in the map.
 public class AreaSelector : MonoBehaviour
 {
-    // Reference to the MapBehaviour component
+    // Reference to the mapBehaviour component
     public MapBehaviour MapBehaviour;
 
     // Property to get the start position of the area
@@ -13,9 +13,9 @@ public class AreaSelector : MonoBehaviour
         get
         {
             var start = Vector3Int.RoundToInt((this.transform.position) / InfiniteMap.BLOCK_SIZE);
-            if (start.y >= this.MapBehaviour.map.Height)
+            if (start.y >= this.MapBehaviour.Map.Height)
             {
-                start.y = this.MapBehaviour.map.Height - 1;
+                start.y = this.MapBehaviour.Map.Height - 1;
             }
             if (start.y < 0)
             {
@@ -32,9 +32,9 @@ public class AreaSelector : MonoBehaviour
         {
             var start = this.StartPosition;
             var size = Vector3Int.RoundToInt(this.transform.localScale / InfiniteMap.BLOCK_SIZE);
-            if (size.y + start.y >= this.MapBehaviour.map.Height)
+            if (size.y + start.y >= this.MapBehaviour.Map.Height)
             {
-                size.y = System.Math.Max(0, this.MapBehaviour.map.Height - start.y);
+                size.y = System.Math.Max(0, this.MapBehaviour.Map.Height - start.y);
             }
             return size;
         }

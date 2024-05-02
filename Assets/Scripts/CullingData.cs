@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
+using UnityEditor;
+using UnityEditor.Experimental.GraphView;
 
-//Define a class named CullingData derived from MonoBehaviour
 public class CullingData : MonoBehaviour
 {
     [HideInInspector]
@@ -28,105 +30,106 @@ public class CullingData : MonoBehaviour
         this.ChunksInRange = new List<Chunk>();
     }
 
-    // Method to get the chunk address based on a position
     public Vector3Int GetChunkAddress(Vector3Int position)
     {
         return Vector3Int.FloorToInt(position.ToVector3() / this.ChunkSize);
     }
 
-    // Method to get the center of a chunk based on its address
     public Vector3 GetChunkCenter(Vector3Int chunkAddress)
     {
-        return this.MapBehaviour.GetWorldSpacePosition(chunkAddress * this.ChunkSize) + (this.ChunkSize - 1) * 0.5f * Map.BLOCK_SIZE * Vector3.one;
+        return this.MapBehaviour.GetWorldspacePosition(chunkAddress * this.ChunkSize) + (this.ChunkSize - 1) * 0.5f * AbstractMap.BLOCK_SIZE * Vector3.one;
     }
 
-    // Method to retrieve a chunk based on its address
-    private Chunk GetChunk(Vector3Int chunkAddress)
+    private Chunk getChunk(Vector3Int chunkAddress)
     {
         if (this.Chunks.ContainsKey(chunkAddress))
         {
             return this.Chunks[chunkAddress];
         }
-        var chunk = new Chunk(new Bounds(this.GetChunkCenter(chunkAddress), Map.BLOCK_SIZE * this.ChunkSize * Vector3.one));
+        var chunk = new Chunk(new Bounds(this.GetChunkCenter(chunkAddress), Vector3.one * AbstractMap.BLOCK_SIZE * this.ChunkSize));
         this.Chunks[chunkAddress] = chunk;
         this.ChunksInRange.Add(chunk);
         return chunk;
     }
 
-    // Method to retrieve a chunk based on its position
-    public Chunk GetChunkFromPosition(Vector3Int position)
+    public Chunk getChunkFromPosition(Vector3Int position)
     {
-        return this.GetChunk(this.GetChunkAddress(position));
+        return this.getChunk(this.GetChunkAddress(position));
     }
 
-    // Method to add a slot to the culling data
+    public Room GetRoom(Vector3Int position)
+    {
+        if (this.RoomsByPosition.ContainsKey(position))
+        {
+            return this.RoomsByPosition[position];
+        }
+        else
+        {
+            return null;
+        }
+    }
+
     public void AddSlot(Slot slot)
     {
-        // If the slot is not collapsed, exit the method
         if (!slot.Collapsed)
         {
             return;
         }
-
-        var chunk = this.GetChunkFromPosition(slot.position);
-
-        // If the slot is not marked as interior
-        if (!slot.module.prefab.isInterior)
+        var chunk = this.getChunkFromPosition(slot.Position);
+        if (!slot.Module.Prototype.IsInterior)
         {
-            // Add the slot to the chunk
             chunk.AddBlock(slot);
             return;
         }
 
         Room room = null;
-
-        // Iterate over the faces of the slot
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 6; i++)
         {
-            var face = slot.module.GetFace(i);
-            // If the face is a connector, continue to the next iteration
-            if (face.connector == 1)
+            var face = slot.Module.GetFace(i);
+            if (face.Connector == 1 || face.IsOcclusionPortal)
             {
                 continue;
             }
-
-            var neighbor = slot.GetNeighbour(i);
-            // If the neighbor slot is null, continue to the next iteration
+            var neighbor = slot.GetNeighbor(i);
             if (neighbor == null)
             {
                 continue;
             }
-
-            // If the neighbor slot is collapsed and exists in the RoomsByPosition dictionary
-            if (neighbor.Collapsed && this.RoomsByPosition.ContainsKey(neighbor.position))
+            if (neighbor.Collapsed && this.RoomsByPosition.ContainsKey(neighbor.Position) && !neighbor.Module.GetFace((i + 3) % 6).IsOcclusionPortal)
             {
-                // If room is null, set it to the room associated with the neighbor position; otherwise, merge the rooms
-                room ??= this.RoomsByPosition[neighbor.position];
-                if (room != this.RoomsByPosition[neighbor.position])
+                if (room == null)
                 {
-                    room = this.MergeRooms(this.RoomsByPosition[neighbor.position], room);
+                    room = this.RoomsByPosition[neighbor.Position];
+                }
+                if (room != this.RoomsByPosition[neighbor.Position])
+                {
+                    room = this.mergeRooms(this.RoomsByPosition[neighbor.Position], room);
                 }
             }
         }
-
-        // If room is still null, create a new room and add it to the chunk's list of rooms
         if (room == null)
         {
             room = new Room();
-            chunk.rooms.Add(room);
+            chunk.Rooms.Add(room);
         }
-
-        // Add the slot to the room and update its renderers
         room.Slots.Add(slot);
-        foreach (var renderer in slot.gameObject.GetComponentsInChildren<Renderer>())
+        foreach (var renderer in slot.GameObject.GetComponentsInChildren<Renderer>())
         {
             room.Renderers.Add(renderer);
         }
-        // Update RoomsByPosition dictionary with the slot's position and associated room
-        this.RoomsByPosition[slot.position] = room;
+        this.RoomsByPosition[slot.Position] = room;
+
+        for (int i = 0; i < 6; i++)
+        {
+            var face = slot.Module.GetFace(i);
+            if (face.Connector == 1)
+            {
+                continue;
+            }
+            var neighbor = slot.GetNeighbor(i);
+        }
     }
 
-    //clear outdated slots and update them
     public void ClearOutdatedSlots()
     {
         if (!this.outdatedSlots.Any())
@@ -137,7 +140,7 @@ public class CullingData : MonoBehaviour
         this.outdatedSlots.Clear();
         foreach (var position in items)
         {
-            var slot = this.MapBehaviour.map.GetSlot(position);
+            var slot = this.MapBehaviour.Map.GetSlot(position);
             if (slot == null || !slot.Collapsed)
             {
                 continue;
@@ -146,49 +149,64 @@ public class CullingData : MonoBehaviour
         }
     }
 
-    //remove a slot and associated rooms
     public void RemoveSlot(Slot slot)
     {
-        var chunk = this.GetChunkFromPosition(slot.position);
+        var chunk = this.getChunkFromPosition(slot.Position);
         chunk.RemoveBlock(slot);
 
-        if (this.RoomsByPosition.ContainsKey(slot.position))
+        if (this.RoomsByPosition.ContainsKey(slot.Position))
         {
-            var room = this.RoomsByPosition[slot.position];
+            var room = this.RoomsByPosition[slot.Position];
             foreach (var roomSlot in room.Slots)
             {
-                this.outdatedSlots.Add(roomSlot.position);
-                this.RoomsByPosition.Remove(roomSlot.position);
+                this.outdatedSlots.Add(roomSlot.Position);
+                this.RoomsByPosition.Remove(roomSlot.Position);
             }
-            this.RemoveRoom(room);
+            this.removeRoom(room);
         }
-        this.outdatedSlots.Remove(slot.position);
+        this.outdatedSlots.Remove(slot.Position);
     }
 
-    //remove a room
-    private void RemoveRoom(Room room)
+    private void removeRoom(Room room)
     {
         foreach (var slot in room.Slots)
         {
-            var chunk = this.GetChunkFromPosition(slot.position);
-            if (chunk.rooms.Contains(room))
+            var chunk = this.getChunkFromPosition(slot.Position);
+            if (chunk.Rooms.Contains(room))
             {
-                chunk.rooms.Remove(room);
+                chunk.Rooms.Remove(room);
             }
         }
     }
 
-    // Method to merge two rooms
-    private Room MergeRooms(Room room1, Room room2)
+    private Room mergeRooms(Room room1, Room room2)
     {
         foreach (var slot in room1.Slots)
         {
-            this.RoomsByPosition[slot.position] = room2;
+            this.RoomsByPosition[slot.Position] = room2;
             room2.Slots.Add(slot);
         }
         room2.Renderers.AddRange(room1.Renderers);
         room2.VisibilityOutdated = true;
-        this.RemoveRoom(room1);
+        this.removeRoom(room1);
         return room2;
     }
+
+#if UNITY_EDITOR
+    [DrawGizmo(GizmoType.InSelectionHierarchy | GizmoType.NotInSelectionHierarchy)]
+    static void DrawGizmos(CullingData cullingData, GizmoType gizmoType)
+    {
+        if (!cullingData.DrawGizmo || cullingData.ChunksInRange == null)
+        {
+            return;
+        }
+        foreach (var chunk in cullingData.ChunksInRange)
+        {
+            foreach (var room in chunk.Rooms)
+            {
+                room.DrawGizmo(cullingData.MapBehaviour);
+            }
+        }
+    }
+#endif
 }

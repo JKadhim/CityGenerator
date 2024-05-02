@@ -1,45 +1,39 @@
-using System;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 using System.Linq;
 using UnityEditor;
-using UnityEngine;
+using System;
 
-public abstract class Map
+public abstract class AbstractMap
 {
     public const float BLOCK_SIZE = 4f;
-    
-    //arbitrary value
     public const int HISTORY_SIZE = 3000;
 
-    public static System.Random random;
+    public static System.Random Random;
 
-    public readonly RingBuffer<HistoryItem> history;
-    public readonly QueueDictionary<Vector3Int, ModuleSet> removalQueue;
+    public readonly RingBuffer<HistoryItem> History;
+    public readonly QueueDictionary<Vector3Int, ModuleSet> RemovalQueue;
     private HashSet<Slot> workArea;
-    public readonly Queue<Slot> buildQueue;
+    public readonly Queue<Slot> BuildQueue;
 
     private int backtrackBarrier;
     private int backtrackAmount = 0;
 
-    private readonly short[][] initialModuleHealth;
+    public readonly short[][] InitialModuleHealth;
 
-    public short[][] InitialModuleHealth => initialModuleHealth;
-
-    protected Map()
+    public AbstractMap()
     {
+        InfiniteMap.Random = new System.Random();
 
-        random = new System.Random();
+        this.History = new RingBuffer<HistoryItem>(AbstractMap.HISTORY_SIZE);
+        this.History.OnOverflow = item => item.Slot.Forget();
+        this.RemovalQueue = new QueueDictionary<Vector3Int, ModuleSet>(() => new ModuleSet());
+        this.BuildQueue = new Queue<Slot>();
 
-        history = new RingBuffer<HistoryItem>(HISTORY_SIZE)
-        {
-            OnOverflow = item => item.slot.Forget()
-        };
-        removalQueue = new QueueDictionary<Vector3Int, ModuleSet>(() => new ModuleSet());
-        buildQueue = new Queue<Slot>();
+        this.InitialModuleHealth = this.createInitialModuleHealth(ModuleData.Current);
 
-        initialModuleHealth = CreateInitialModuleHealth(ModuleData.current);
-
-        backtrackBarrier = 0;
+        this.backtrackBarrier = 0;
     }
 
     public abstract Slot GetSlot(Vector3Int position);
@@ -48,26 +42,29 @@ public abstract class Map
 
     public abstract void ApplyBoundaryConstraints(IEnumerable<BoundaryConstraint> constraints);
 
-    // Method to notify that a slot has collapsed
     public void NotifySlotCollapsed(Slot slot)
     {
-        workArea?.Remove(slot);
-        buildQueue.Enqueue(slot);
+        if (this.workArea != null)
+        {
+            this.workArea.Remove(slot);
+        }
+        this.BuildQueue.Enqueue(slot);
     }
 
-    // Method to notify that the collapse of a slot has been undone
     public void NotifySlotCollapseUndone(Slot slot)
     {
-        workArea?.Add(slot);
+        if (this.workArea != null)
+        {
+            this.workArea.Add(slot);
+        }
     }
 
-    // Method to finish the removal queue
     public void FinishRemovalQueue()
     {
-        while (removalQueue.Any())
+        while (this.RemovalQueue.Any())
         {
-            var kvp = removalQueue.Dequeue();
-            var slot = GetSlot(kvp.Key);
+            var kvp = this.RemovalQueue.Dequeue();
+            var slot = this.GetSlot(kvp.Key);
             if (!slot.Collapsed)
             {
                 slot.RemoveModules(kvp.Value, false);
@@ -75,90 +72,79 @@ public abstract class Map
         }
     }
 
-    // Method to enforce a walkway in a specific direction from a start position
     public void EnforceWalkway(Vector3Int start, int direction)
     {
-        var slot = GetSlot(start);
-        var toRemove = slot.modules.Where(module => !module.GetFace(direction).walkable);
+        var slot = this.GetSlot(start);
+        var toRemove = slot.Modules.Where(module => !module.GetFace(direction).Walkable);
         slot.RemoveModules(ModuleSet.FromEnumerable(toRemove));
     }
 
-    // Method to enforce a walkway between two positions
     public void EnforceWalkway(Vector3Int start, Vector3Int destination)
     {
-        int direction = Directions.GetIndex((Vector3)(destination - start));
-        EnforceWalkway(start, direction);
-        EnforceWalkway(destination, (direction + 2) % 4);
+        int direction = Orientations.GetIndex((Vector3)(destination - start));
+        this.EnforceWalkway(start, direction);
+        this.EnforceWalkway(destination, (direction + 3) % 6);
     }
 
-
-
-    // Collapses a set of targets in the map, simulating the process of procedural generation.
     public void Collapse(IEnumerable<Vector3Int> targets, bool showProgress = false)
     {
 #if UNITY_EDITOR
         try
         {
 #endif
-            // ClearMap the removal queue and initialize the work area with non-collapsed slots from the targets
-            removalQueue.Clear();
-            workArea = new HashSet<Slot>(targets.Select(target => GetSlot(target)).Where(slot => slot != null && !slot.Collapsed));
+            this.RemovalQueue.Clear();
+            this.workArea = new HashSet<Slot>(targets.Select(target => this.GetSlot(target)).Where(slot => slot != null && !slot.Collapsed));
 
-            // Collapse slots until work area is empty
-            while (workArea.Any())
+            while (this.workArea.Any())
             {
                 float minEntropy = float.PositiveInfinity;
                 Slot selected = null;
 
-                // Find the slot with the minimum entropy among the work area
                 foreach (var slot in workArea)
                 {
-                    float entropy = slot.modules.Entropy;
+                    float entropy = slot.Modules.Entropy;
                     if (entropy < minEntropy)
                     {
                         selected = slot;
                         minEntropy = entropy;
                     }
                 }
-
                 try
                 {
-                    // Attempt to collapse the selected slot randomly
                     selected.CollapseRandom();
                 }
                 catch (CollapseFailedException)
                 {
-                    // If collapse fails, clear the removal queue and attempt to backtrack
-                    removalQueue.Clear();
-                    if (history.TotalCount > backtrackBarrier)
+                    this.RemovalQueue.Clear();
+                    if (this.History.TotalCount > this.backtrackBarrier)
                     {
-                        backtrackBarrier = history.TotalCount;
-                        backtrackAmount = 2;
+                        this.backtrackBarrier = this.History.TotalCount;
+                        this.backtrackAmount = 2;
                     }
                     else
                     {
-                        backtrackAmount *= 2;
+                        this.backtrackAmount *= 2;
                     }
-                    if (backtrackAmount > 0)
+                    if (this.backtrackAmount > 0)
                     {
-                        Debug.Log(history.Count + " Backtracking " + backtrackAmount + " steps...");
+                        Debug.Log(this.History.Count + " Backtracking " + this.backtrackAmount + " steps...");
                     }
-                    Undo(backtrackAmount);
+                    this.Undo(this.backtrackAmount);
                 }
 
 #if UNITY_EDITOR
-                // If showProgress is true, update progress bar in Unity Editor
-                if (showProgress && workArea.Count % 20 == 0 && EditorUtility.DisplayCancelableProgressBar("Collapsing area... ", workArea.Count +
-                    " left...", 1f - (float)workArea.Count / targets.Count()))
+                if (showProgress && this.workArea.Count % 20 == 0)
                 {
-                    EditorUtility.ClearProgressBar();
-                    throw new Exception("Map generation cancelled.");
+                    if (EditorUtility.DisplayCancelableProgressBar("Collapsing area... ", this.workArea.Count + " left...", 1f - (float)this.workArea.Count() / targets.Count()))
+                    {
+                        EditorUtility.ClearProgressBar();
+                        throw new Exception("Map generation cancelled.");
+                    }
                 }
 #endif
             }
 
 #if UNITY_EDITOR
-            // If showProgress is true, clear progress bar in Unity Editor after completion
             if (showProgress)
             {
                 EditorUtility.ClearProgressBar();
@@ -166,7 +152,6 @@ public abstract class Map
         }
         catch (Exception exception)
         {
-            // Catch and handle exceptions, clear progress bar if necessary, and log warning
             if (showProgress)
             {
                 EditorUtility.ClearProgressBar();
@@ -177,100 +162,77 @@ public abstract class Map
 #endif
     }
 
-    // Collapses a rectangular area starting from the specified position with the given size.
     public void Collapse(Vector3Int start, Vector3Int size, bool showProgress = false)
     {
         var targets = new List<Vector3Int>();
-
-        // Iterate over each coordinate within the specified size
         for (int x = 0; x < size.x; x++)
         {
             for (int y = 0; y < size.y; y++)
             {
                 for (int z = 0; z < size.z; z++)
                 {
-                    // Add the current position to the targets list
                     targets.Add(start + new Vector3Int(x, y, z));
                 }
             }
         }
-
-        // Collapse the targets using the Collapse method
-        Collapse(targets, showProgress);
+        this.Collapse(targets, showProgress);
     }
 
-    // Undoes a specified number of steps in the history of collapsed slots.
     public void Undo(int steps)
     {
-        // Iterate until the specified number of steps is reached or history is empty
-        while (steps > 0 && history.Any())
+        while (steps > 0 && this.History.Any())
         {
-            // Pop the latest history item
-            var item = history.Pop();
+            var item = this.History.Pop();
 
-            // Restore the removed modules to their respective slots
-            foreach (var slotAddress in item.removedModules.Keys)
+            foreach (var slotAddress in item.RemovedModules.Keys)
             {
-                GetSlot(slotAddress).AddModules(item.removedModules[slotAddress]);
+                this.GetSlot(slotAddress).AddModules(item.RemovedModules[slotAddress]);
             }
 
-            // Reset the module reference of the slot and notify collapse undone
-            item.slot.module = null;
-            NotifySlotCollapseUndone(item.slot);
+            item.Slot.Module = null;
+            this.NotifySlotCollapseUndone(item.Slot);
             steps--;
         }
-
-        // If history is empty, reset the backtrack barrier
-        if (history.Count == 0)
+        if (this.History.Count == 0)
         {
-            backtrackBarrier = 0;
+            this.backtrackBarrier = 0;
         }
     }
 
-    // Creates an initial health for modules based on their possible neighbors.
-    private short[][] CreateInitialModuleHealth(Module[] modules)
+    private short[][] createInitialModuleHealth(Module[] modules)
     {
-        var initModuleHealth = new short[4][];
-
-        // Iterate over each direction
-        for (int i = 0; i < 4; i++)
+        var initialModuleHealth = new short[6][];
+        for (int i = 0; i < 6; i++)
         {
-            initModuleHealth[i] = new short[modules.Length];
-
-            // Iterate over each module
+            initialModuleHealth[i] = new short[modules.Length];
             foreach (var module in modules)
             {
-                // Count the number of possible neighbors in the opposite direction
-                foreach (var possibleNeighbor in module.possibleNeighbours[(i + 2) % 4])
+                foreach (var possibleNeighbor in module.PossibleNeighbors[(i + 3) % 6])
                 {
-                    initModuleHealth[i][possibleNeighbor.index]++;
+                    initialModuleHealth[i][possibleNeighbor.Index]++;
                 }
             }
         }
 
 #if UNITY_EDITOR
-        // Validate the initial health matrix
         for (int i = 0; i < modules.Length; i++)
         {
-            for (int d = 0; d < 4; d++)
+            for (int d = 0; d < 6; d++)
             {
-                if (initModuleHealth[d][i] == 0)
+                if (initialModuleHealth[d][i] == 0)
                 {
-                    // Log error if a module cannot be reached from a direction
-                    Debug.LogError("Module " + modules[i].name + " cannot be reached from direction " + d + " (" + modules[i].GetFace(d).ToString() + ")!", modules[i].prefabObject);
+                    Debug.LogError("Module " + modules[i].Name + " cannot be reached from direction " + d + " (" + modules[i].GetFace(d).ToString() + ")!", modules[i].Prefab);
                     throw new Exception("Unreachable module.");
                 }
             }
         }
 #endif
 
-        return initModuleHealth;
+        return initialModuleHealth;
     }
 
-    // Creates a copy of the initial module health matrix.
-    public short[][] CopyInitialModuleHealth()
+    public short[][] CopyInititalModuleHealth()
     {
-        return InitialModuleHealth.Select(a => a.ToArray()).ToArray();
+        return this.InitialModuleHealth.Select(a => a.ToArray()).ToArray();
     }
-
 }

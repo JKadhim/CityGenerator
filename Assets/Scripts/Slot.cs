@@ -1,250 +1,250 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-
-//Slot class represents a slot within a map grid.
 public class Slot
 {
-    public readonly Vector3Int position;
-    public ModuleSet modules;
-    public short[][] moduleHealth;
+    public Vector3Int Position;
 
-    private readonly Map map;
+    // List of modules that can still be placed here
+    public ModuleSet Modules;
 
-    public Module module;
-    public GameObject gameObject;
+    // Direction -> Module -> Number of items in this.getneighbor(direction).Modules that allow this module as a neighbor
+    public short[][] ModuleHealth;
 
-    // Indicates whether the slot is collapsed (contains a module)
-    public bool Collapsed { get { return module != null; } }
-    // Indicates whether the slot is constructed (has a GameObject or a collapsed module)
-    public bool Constructed { get { return gameObject != null || (Collapsed && !module.prefab.spawn); } }
+    private AbstractMap map;
 
-    public Slot(Vector3Int position, Map map)
+    public Module Module;
+
+    public GameObject GameObject;
+
+    public bool Collapsed
     {
-        this.position = position;
-        this.map = map;
-        moduleHealth = map.CopyInitialModuleHealth();
-        modules = new ModuleSet(initializeFull: true);
+        get
+        {
+            return this.Module != null;
+        }
     }
 
-    // Constructor to InitializeMap a new instance of the Slot class as a copy of the prefabObject
-    public Slot(Vector3Int position, Map map, Slot prefab)
+    public bool ConstructionComplete
     {
-        this.position = position;
-        this.map = map;
-        moduleHealth = prefab.moduleHealth.Select(a => a.ToArray()).ToArray();
-        modules = new ModuleSet(prefab.modules);
+        get
+        {
+            return this.GameObject != null || (this.Collapsed && !this.Module.Prototype.Spawn);
+        }
     }
 
-    //retrieves the neighbouring slot in the specified direction.
-    public Slot GetNeighbour(int direction)
+    public Slot(Vector3Int position, AbstractMap map)
     {
-        return map.GetSlot(position + Directions.Direction[direction]);
+        this.Position = position;
+        this.map = map;
+        this.ModuleHealth = map.CopyInititalModuleHealth();
+        this.Modules = new ModuleSet(initializeFull: true);
+    }
+
+    public Slot(Vector3Int position, AbstractMap map, Slot prototype)
+    {
+        this.Position = position;
+        this.map = map;
+        this.ModuleHealth = prototype.ModuleHealth.Select(a => a.ToArray()).ToArray();
+        this.Modules = new ModuleSet(prototype.Modules);
+    }
+
+    // TODO only look up once and then cache???
+    public Slot GetNeighbor(int direction)
+    {
+        return this.map.GetSlot(this.Position + Orientations.Direction[direction]);
     }
 
     public void Collapse(Module module)
     {
-        // Checks if the slot is already collapsed.
-        if (Collapsed)
+        if (this.Collapsed)
         {
-            Debug.LogWarning("already collapsed");
+            Debug.LogWarning("Trying to collapse already collapsed slot.");
             return;
         }
 
-        // Records the collapse action in the map's history.
-        map.history.Push(new HistoryItem(this));
+        this.map.History.Push(new HistoryItem(this));
 
-        this.module = module;
-
-        // Creates a set of modules to remove and removes the specified module from it.
-        var toRemove = new ModuleSet(modules);
+        this.Module = module;
+        var toRemove = new ModuleSet(this.Modules);
         toRemove.Remove(module);
-        RemoveModules(toRemove);
+        this.RemoveModules(toRemove);
 
-        // Notifies the map that the slot has collapsed.
-        map.NotifySlotCollapsed(this);
+        this.map.NotifySlotCollapsed(this);
     }
 
-    //randomly collapses the slot with one of its modules
+    private void checkConsistency(Module module)
+    {
+        for (int d = 0; d < 6; d++)
+        {
+            if (this.GetNeighbor(d) != null && this.GetNeighbor(d).Collapsed && !this.GetNeighbor(d).Module.PossibleNeighbors[(d + 3) % 6].Contains(module))
+            {
+                throw new Exception("Illegal collapse, not in neighbour list. (Incompatible connectors)");
+            }
+        }
+
+        if (!this.Modules.Contains(module))
+        {
+            throw new Exception("Illegal collapse!");
+        }
+    }
+
     public void CollapseRandom()
     {
-        // Throws a CollapseFailedException if there are no modules in the slot.
-        if (!modules.Any())
+        if (!this.Modules.Any())
         {
             throw new CollapseFailedException(this);
         }
-
-        // Throws a System.Exception if the slot is already collapsed.
-        if (Collapsed)
+        if (this.Collapsed)
         {
-            throw new System.Exception("already collapsed");
+            throw new Exception("Slot is already collapsed.");
         }
 
-        // Calculates the maximum probability by summing the probabilities of all modules.
-        float max = modules.Select(module => module.prefab.probability).Sum();
-
-        // Generates a random roll within the range of module probabilities.
-        float roll = (float)(Map.random.NextDouble() * max);
-
-        // Accumulates probabilities until the roll is reached and collapses the slot with the selected module.
+        float max = this.Modules.Select(module => module.Prototype.Probability).Sum();
+        float roll = (float)(InfiniteMap.Random.NextDouble() * max);
         float p = 0;
-        foreach (var candidate in modules)
+        foreach (var candidate in this.Modules)
         {
-            p += candidate.prefab.probability;
+            p += candidate.Prototype.Probability;
             if (p >= roll)
             {
-                Collapse(candidate);
+                this.Collapse(candidate);
                 return;
             }
         }
-
-        // If no module is selected, collapses the slot with the first module.
-        Collapse(modules.First());
+        this.Collapse(this.Modules.First());
     }
 
-
-    //RemoveModules method removes specified modules from the slot.
+    // This modifies the supplied ModuleSet as a side effect
     public void RemoveModules(ModuleSet modulesToRemove, bool recursive = true)
     {
-        // Intersect modulesToRemove with the slot's current modules.
-        modulesToRemove.Intersect(modules);
+        modulesToRemove.Intersect(this.Modules);
 
-        // Records the removal action if there is a history of map modifications.
-        if (map.history != null && map.history.Any())
+        if (this.map.History != null && this.map.History.Any())
         {
-            var item = map.history.Peek();
-            if (!item.removedModules.ContainsKey(position))
+            var item = this.map.History.Peek();
+            if (!item.RemovedModules.ContainsKey(this.Position))
             {
-                item.removedModules[position] = new ModuleSet();
+                item.RemovedModules[this.Position] = new ModuleSet();
             }
-            item.removedModules[position].Add(modulesToRemove);
+            item.RemovedModules[this.Position].Add(modulesToRemove);
         }
 
-        // Iterate through each direction to check neighboring slots for possible module removals.
-        for (int i = 0; i < 4; i++)
+        for (int d = 0; d < 6; d++)
         {
-            int inverse = (i + 2) % 4;
-            var neighbour = GetNeighbour(i);
-            if (neighbour == null || neighbour.Forgotten)
+            int inverseDirection = (d + 3) % 6;
+            var neighbor = this.GetNeighbor(d);
+            if (neighbor == null || neighbor.Forgotten)
             {
 #if UNITY_EDITOR
-                // Check if the neighbor is outside of the map's range limit
-                if ((map as InfiniteMap).IsOutsideOfRangeLimit(position + Directions.Direction[i]))
+                if (this.map is InfiniteMap && (this.map as InfiniteMap).IsOutsideOfRangeLimit(this.Position + Orientations.Direction[d]))
                 {
-                    (map as InfiniteMap).OnHitRangeLimit(position + Directions.Direction[i], modulesToRemove);
+                    (this.map as InfiniteMap).OnHitRangeLimit(this.Position + Orientations.Direction[d], modulesToRemove);
                 }
 #endif
                 continue;
             }
 
-            // Iterate through modulesToRemove to adjust neighboring slots' moduleHealth and removalQueue.
-            foreach (var mod in modulesToRemove)
+            foreach (var module in modulesToRemove)
             {
-                for (int j = 0; j < mod.possibleNeighbours[i].Count; j++)
+                for (int i = 0; i < module.PossibleNeighborsArray[d].Length; i++)
                 {
-                    var possibleNeighbour = mod.possibleNeighboursArray[i][j];
-                    if (neighbour.moduleHealth[inverse][possibleNeighbour.index] == 1 && neighbour.modules.Contains(possibleNeighbour))
+                    var possibleNeighbor = module.PossibleNeighborsArray[d][i];
+                    if (neighbor.ModuleHealth[inverseDirection][possibleNeighbor.Index] == 1 && neighbor.Modules.Contains(possibleNeighbor))
                     {
-                        map.removalQueue[neighbour.position].Add(possibleNeighbour);
+                        this.map.RemovalQueue[neighbor.Position].Add(possibleNeighbor);
                     }
-
 #if UNITY_EDITOR
-                    // Throw an exception if the neighbor's moduleHealth becomes negative.
-                    if (neighbour.moduleHealth[inverse][possibleNeighbour.index] < 1)
+                    if (neighbor.ModuleHealth[inverseDirection][possibleNeighbor.Index] < 1)
                     {
-                        throw new System.InvalidOperationException("ModuleHealth must not be negative. " + position + "d: " + i);
+                        throw new System.InvalidOperationException("ModuleHealth must not be negative. " + this.Position + " d: " + d);
                     }
 #endif
-                    neighbour.moduleHealth[inverse][possibleNeighbour.index]--;
+                    neighbor.ModuleHealth[inverseDirection][possibleNeighbor.Index]--;
                 }
             }
         }
 
-        // Remove modulesToRemove from the slot.
-        modules.Remove(modulesToRemove);
+        this.Modules.Remove(modulesToRemove);
 
-        // Throw a CollapseFailedException if the slot becomes empty after removal.
-        if (modules.Empty)
+        if (this.Modules.Empty)
         {
             throw new CollapseFailedException(this);
         }
 
-        // If recursive is true, finish removal actions in neighboring slots.
         if (recursive)
         {
-            map.FinishRemovalQueue();
+            this.map.FinishRemovalQueue();
         }
     }
 
-
-
-    //adds specified modules to the slot.
+    /// <summary>
+    /// Add modules non-recursively.
+    /// Returns true if this lead to this slot changing from collapsed to not collapsed.
+    /// </summary>
     public void AddModules(ModuleSet modulesToAdd)
     {
-        foreach (var mod in modulesToAdd)
+        foreach (var module in modulesToAdd)
         {
-            // Skip adding if the module already exists in the slot or if it is the collapsed module.
-            if (modules.Contains(mod) || mod == this.module)
+            if (this.Modules.Contains(module) || module == this.Module)
             {
                 continue;
             }
-
-            // Adjusts neighboring slots' moduleHealth based on possible connections for the module.
-            for (int i = 0; i < 4; i++)
+            for (int d = 0; d < 6; d++)
             {
-                int inverse = (i + 2) % 4;
-                var neighbour = GetNeighbour(i);
-                if (neighbour == null || neighbour.Forgotten)
+                int inverseDirection = (d + 3) % 6;
+                var neighbor = this.GetNeighbor(d);
+                if (neighbor == null || neighbor.Forgotten)
                 {
                     continue;
                 }
-                foreach (var possibleNeighbour in mod.possibleNeighbours[i])
+
+                foreach (var possibleNeighbor in module.PossibleNeighbors[d])
                 {
-                    neighbour.moduleHealth[inverse][possibleNeighbour.index]++;
+                    neighbor.ModuleHealth[inverseDirection][possibleNeighbor.Index]++;
                 }
             }
-
-            // Adds the module to the slot's modules set.
-            modules.Add(mod);
+            this.Modules.Add(module);
         }
 
-        // If the slot was collapsed and becomes non-empty, notifies the map that the collapse has been undone.
-        if (Collapsed && !modules.Empty)
+        if (this.Collapsed && !this.Modules.Empty)
         {
-            module = null;
-            map.NotifySlotCollapseUndone(this);
+            this.Module = null;
+            this.map.NotifySlotCollapseUndone(this);
         }
     }
 
-    //Removes modules that do not fit the specified connector in the given direction.
     public void EnforceConnector(int direction, int connector)
     {
-        var toRemove = modules.Where(module => !module.Fits(direction, connector));
-        RemoveModules(ModuleSet.FromEnumerable(toRemove));
+        var toRemove = this.Modules.Where(module => !module.Fits(direction, connector));
+        this.RemoveModules(ModuleSet.FromEnumerable(toRemove));
     }
 
-
-    //Removes modules that fit the specified connector in the given direction
     public void ExcludeConnector(int direction, int connector)
     {
-        var toRemove = modules.Where(module => module.Fits(direction, connector));
-        RemoveModules(ModuleSet.FromEnumerable(toRemove));
+        var toRemove = this.Modules.Where(module => module.Fits(direction, connector));
+        this.RemoveModules(ModuleSet.FromEnumerable(toRemove));
     }
 
-    //Clears moduleHealth and modules to mark the slot as forgotten.
+    public override int GetHashCode()
+    {
+        return this.Position.GetHashCode();
+    }
+
     public void Forget()
     {
-        moduleHealth = null;
-        modules = null;
+        this.ModuleHealth = null;
+        this.Modules = null;
     }
 
-    //Indicates whether the slot is forgotten (modules and moduleHealth are null).    
     public bool Forgotten
     {
         get
         {
-            return modules == null;
+            return this.Modules == null;
         }
     }
-
 }

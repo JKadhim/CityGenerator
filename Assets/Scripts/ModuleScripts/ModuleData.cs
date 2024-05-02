@@ -1,27 +1,64 @@
-using System;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 using System.Linq;
 using UnityEditor;
-using UnityEngine;
+using System;
 
-[CreateAssetMenu(menuName = "CityGenerator/ModuleData", fileName = "modules.asset")]
+[CreateAssetMenu(menuName = "Wave Function Collapse/Module Data", fileName = "modules.asset")]
 public class ModuleData : ScriptableObject, ISerializationCallbackReceiver
 {
-    public static Module[] current;
+    public static Module[] Current;
 
-    public GameObject prefabs;
+    public GameObject Prototypes;
 
-    public Module[] modules;
+    public Module[] Modules;
 
 #if UNITY_EDITOR
-    // Method to get module prefabs from the prefabs transform
-    private IEnumerable<ModulePrefab> GetPrefabs()
+    public void SimplifyNeighborData()
     {
-        // Iterate over child transforms of prefabs
-        foreach (Transform transform in this.prefabs.transform)
+        ModuleData.Current = this.Modules;
+        const int height = 12;
+        int count = 0;
+        var center = new Vector3Int(0, height / 2, 0);
+
+        int p = 0;
+        foreach (var module in this.Modules)
         {
-            var item = transform.GetComponent<ModulePrefab>();
-            // Yield enabled module prefabs
+            var map = new InfiniteMap(height);
+            var slot = map.GetSlot(center);
+            try
+            {
+                slot.Collapse(module);
+            }
+            catch (CollapseFailedException exception)
+            {
+                throw new InvalidOperationException("Module " + module.Name + " creates a failure at relative position " + (exception.slot.Position - center) + ".");
+            }
+            for (int direction = 0; direction < 6; direction++)
+            {
+                var neighbor = slot.GetNeighbor(direction);
+                int unoptimizedNeighborCount = module.PossibleNeighbors[direction].Count;
+                module.PossibleNeighbors[direction].Intersect(neighbor.Modules);
+                count += unoptimizedNeighborCount - module.PossibleNeighbors[direction].Count;
+            }
+            module.PossibleNeighborsArray = module.PossibleNeighbors.Select(ms => ms.ToArray()).ToArray();
+            p++;
+            EditorUtility.DisplayProgressBar("Simplifying... " + count, module.Name, (float)p / this.Modules.Length);
+        }
+        Debug.Log("Removed " + count + " impossible neighbors.");
+        EditorUtility.ClearProgressBar();
+        EditorUtility.SetDirty(this);
+        AssetDatabase.SaveAssets();
+    }
+
+
+
+    private IEnumerable<ModulePrototype> getPrototypes()
+    {
+        foreach (Transform transform in this.Prototypes.transform)
+        {
+            var item = transform.GetComponent<ModulePrototype>();
             if (item != null && item.enabled)
             {
                 yield return item;
@@ -29,94 +66,91 @@ public class ModuleData : ScriptableObject, ISerializationCallbackReceiver
         }
     }
 
-
-    // Method to create modules based on prefabs
-    public void CreateModules(bool respectNeigbourExclusions = true)
+    public void CreateModules(bool respectNeigborExclusions = true)
     {
         int count = 0;
-        var modulesLocal = new List<Module>();
+        var modules = new List<Module>();
 
-        // Get module prefabs from the prefabs transform
-        var prefabsLocal = this.GetPrefabs().ToArray();
+        var prototypes = this.getPrototypes().ToArray();
 
-        // Dictionary to map modules to their prefabs in the scene
-        var scenePrefab = new Dictionary<Module, ModulePrefab>();
-        // Iterate over module prefabs
-        for (int i = 0; i < prefabsLocal.Length; i++)
+        var scenePrototype = new Dictionary<Module, ModulePrototype>();
+
+        for (int i = 0; i < prototypes.Length; i++)
         {
-            var prefab = prefabsLocal[i];
-            // InitializeMap excluded neighbours for each face
-            for (int face = 0; face < 4; face++)
+            var prototype = prototypes[i];
+            for (int face = 0; face < 6; face++)
             {
-                if (prefab.Faces[face].excludedNeighbours == null)
+                if (prototype.Faces[face].ExcludedNeighbours == null)
                 {
-                    prefab.Faces[face].excludedNeighbours = new ModulePrefab[0];
+                    prototype.Faces[face].ExcludedNeighbours = new ModulePrototype[0];
                 }
             }
 
-            // Create module instances for each rotation variant
             for (int rotation = 0; rotation < 4; rotation++)
             {
-                if (rotation == 0 || !prefab.CompareRotatedVariants(0, rotation))
+                if (rotation == 0 || !prototype.CompareRotatedVariants(0, rotation))
                 {
-                    var module = new Module(prefab.gameObject, rotation, count);
-                    modulesLocal.Add(module);
-                    scenePrefab[module] = prefab;
+                    var module = new Module(prototype.gameObject, rotation, count);
+                    modules.Add(module);
+                    scenePrototype[module] = prototype;
                     count++;
                 }
             }
 
-            EditorUtility.DisplayProgressBar("Creating module prefabs...", prefab.gameObject.name, (float)i / prefabsLocal.Length);
+            EditorUtility.DisplayProgressBar("Creating module prototypes...", prototype.gameObject.name, (float)i / prototypes.Length);
         }
 
-        // Set current module data to the created modules
-        ModuleData.current = modulesLocal.ToArray();
+        ModuleData.Current = modules.ToArray();
 
-        if (ModuleData.current != null) { Debug.Log("exists 1"); }
-
-        // Populate possible neighbours for each module
-        foreach (var module in modulesLocal)
+        foreach (var module in modules)
         {
-            module.possibleNeighbours = new ModuleSet[4];
-            for (int direction = 0; direction < 4; direction++)
+            module.PossibleNeighbors = new ModuleSet[6];
+            for (int direction = 0; direction < 6; direction++)
             {
-                var face = scenePrefab[module].Faces[Directions.Rotate(direction, module.rotation)];
-                module.possibleNeighbours[direction] = new ModuleSet(modulesLocal
+                var face = scenePrototype[module].Faces[Orientations.Rotate(direction, module.Rotation)];
+                module.PossibleNeighbors[direction] = new ModuleSet(modules
                     .Where(neighbor => module.Fits(direction, neighbor)
-                        && (!respectNeigbourExclusions || (
-                            !face.excludedNeighbours.Contains(scenePrefab[neighbor])
-                            && !scenePrefab[neighbor].Faces[Directions.Rotate((direction + 2) % 4, neighbor.rotation)].excludedNeighbours.Contains(scenePrefab[module]))
-                            && (!face.enforceWalkableNeighbor || scenePrefab[neighbor].Faces[Directions.Rotate((direction + 2) % 4, neighbor.rotation)].walkable)
-                            && (face.walkable || !scenePrefab[neighbor].Faces[Directions.Rotate((direction + 2) % 4, neighbor.rotation)].enforceWalkableNeighbor))
+                        && (!respectNeigborExclusions || (
+                            !face.ExcludedNeighbours.Contains(scenePrototype[neighbor])
+                            && !scenePrototype[neighbor].Faces[Orientations.Rotate((direction + 3) % 6, neighbor.Rotation)].ExcludedNeighbours.Contains(scenePrototype[module]))
+                            && (!face.EnforceWalkableNeighbor || scenePrototype[neighbor].Faces[Orientations.Rotate((direction + 3) % 6, neighbor.Rotation)].Walkable)
+                            && (face.Walkable || !scenePrototype[neighbor].Faces[Orientations.Rotate((direction + 3) % 6, neighbor.Rotation)].EnforceWalkableNeighbor))
                     ));
             }
 
-            // Convert possible neighbours to arrays
-            module.possibleNeighboursArray = module.possibleNeighbours.Select(ms => ms.ToArray()).ToArray();
+            module.PossibleNeighborsArray = module.PossibleNeighbors.Select(ms => ms.ToArray()).ToArray();
         }
-        // ClearMap progress bar
         EditorUtility.ClearProgressBar();
 
-        // Set modules array and mark scene as dirty
-        this.modules = modulesLocal.ToArray();
+        this.Modules = modules.ToArray();
         EditorUtility.SetDirty(this);
         AssetDatabase.SaveAssets();
     }
-
 #endif
 
-    public void OnBeforeSerialize() { }
+    public void OnBeforeSerialize()
+    {
 
+    }
 
-    // Method invoked after deserialization
     public void OnAfterDeserialize()
     {
-        // Set current module data to deserialized modules
-        ModuleData.current = this.modules;
-        // Iterate over modules and convert possible neighbours to arrays
-        foreach (var module in this.modules)
+        ModuleData.Current = this.Modules;
+        foreach (var module in this.Modules)
         {
-            module.possibleNeighboursArray = module.possibleNeighbours.Select(ms => ms.ToArray()).ToArray();
+            module.PossibleNeighborsArray = module.PossibleNeighbors.Select(ms => ms.ToArray()).ToArray();
         }
+    }
+
+    public void SavePrototypes()
+    {
+#if UNITY_EDITOR
+        EditorUtility.SetDirty(this.Prototypes);
+        AssetDatabase.SaveAssets();
+        foreach (var module in this.Modules)
+        {
+            module.Prototype = module.Prefab.GetComponent<ModulePrototype>();
+        }
+#endif
     }
 }
