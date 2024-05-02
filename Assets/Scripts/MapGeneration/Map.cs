@@ -7,8 +7,8 @@ using System;
 
 public abstract class AbstractMap
 {
-    public const float BLOCK_SIZE = 4f;
-    public const int HISTORY_SIZE = 3000;
+    public const float BLOCK_SIZE = 8f;
+    public const int HISTORY_SIZE = 10000;
 
     public static System.Random Random;
 
