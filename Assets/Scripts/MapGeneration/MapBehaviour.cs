@@ -7,28 +7,28 @@ using System;
 
 public class MapBehaviour : MonoBehaviour
 {
-    public InfiniteMap Map;
+    public InfiniteMap map;
 
-    public int MapHeight = 6;
+    public int mapHeight = 6;
 
-    public BoundaryConstraint[] BoundaryConstraints;
+    public Constraints[] constraints;
 
-    public bool ApplyBoundaryConstraints = true;
+    public bool applyConstraints = true;
 
-    public ModuleData ModuleData;
+    public ModuleData moduleData;
 
     private CullingData cullingData;
 
-    public Vector3 GetWorldspacePosition(Vector3Int position)
+    public Vector3 GetWorldPosition(Vector3Int position)
     {
         return this.transform.position
             + Vector3.up * InfiniteMap.BLOCK_SIZE / 2f
             + position.ToVector3() * InfiniteMap.BLOCK_SIZE;
     }
 
-    public Vector3Int GetMapPosition(Vector3 worldSpacePosition)
+    public Vector3Int GetMapPosition(Vector3 worldPosition)
     {
-        var pos = (worldSpacePosition - this.transform.position) / InfiniteMap.BLOCK_SIZE;
+        var pos = (worldPosition - this.transform.position) / InfiniteMap.BLOCK_SIZE;
         return Vector3Int.FloorToInt(pos + new Vector3(0.5f, 0, 0.5f));
     }
 
@@ -43,17 +43,17 @@ public class MapBehaviour : MonoBehaviour
         {
             GameObject.DestroyImmediate(child.gameObject);
         }
-        this.Map = null;
+        this.map = null;
     }
 
     public void Initialize()
     {
-        ModuleData.Current = this.ModuleData.Modules;
+        ModuleData.current = this.moduleData.modules;
         this.Clear();
-        this.Map = new InfiniteMap(this.MapHeight);
-        if (this.ApplyBoundaryConstraints && this.BoundaryConstraints != null && this.BoundaryConstraints.Any())
+        this.map = new InfiniteMap(this.mapHeight);
+        if (this.applyConstraints && this.constraints != null && this.constraints.Any())
         {
-            this.Map.ApplyBoundaryConstraints(this.BoundaryConstraints);
+            this.map.ApplyConstraints(this.constraints);
         }
         this.cullingData = this.GetComponent<CullingData>();
         this.cullingData.Initialize();
@@ -63,98 +63,73 @@ public class MapBehaviour : MonoBehaviour
     {
         get
         {
-            return this.Map != null;
+            return this.map != null;
         }
     }
 
     public void Update()
     {
-        if (this.Map == null || this.Map.BuildQueue == null)
+        if (this.map == null || this.map.buildQueue == null)
         {
             return;
         }
 
         int itemsLeft = 50;
 
-        while (this.Map.BuildQueue.Count != 0 && itemsLeft > 0)
+        while (this.map.buildQueue.Count != 0 && itemsLeft > 0)
         {
-            var slot = this.Map.BuildQueue.Peek();
-            if (slot == null)
+            var cell = this.map.buildQueue.Peek();
+            if (cell == null)
             {
                 return;
             }
-            if (this.BuildSlot(slot))
+            if (this.BuildCell(cell))
             {
                 itemsLeft--;
             }
-            this.Map.BuildQueue.Dequeue();
+            this.map.buildQueue.Dequeue();
         }
-        this.cullingData.ClearOutdatedSlots();
+        this.cullingData.ClearOldCells();
     }
 
-    public bool BuildSlot(Slot slot)
+    public bool BuildCell(Cell cell)
     {
-        if (slot.GameObject != null)
+        if (cell.gameObject != null)
         {
-            this.cullingData.RemoveSlot(slot);
+            this.cullingData.RemoveCell(cell);
 #if UNITY_EDITOR
-            GameObject.DestroyImmediate(slot.GameObject);
-#else
-			GameObject.Destroy(slot.GameObject);
+            GameObject.DestroyImmediate(cell.gameObject);
 #endif
         }
 
-        if (!slot.Collapsed || slot.Module.Prototype.Spawn == false)
+        if (!cell.Collapsed || !cell.module.prefab.spawn)
         {
             return false;
         }
-        var module = slot.Module;
+        var module = cell.module;
         if (module == null)
-        { // Can be null due to race conditions
+        {
             return false;
         }
 
-        var gameObject = GameObject.Instantiate(module.Prototype.gameObject);
-        gameObject.name = module.Prototype.gameObject.name + " " + slot.Position;
-        GameObject.DestroyImmediate(gameObject.GetComponent<ModulePrototype>());
-        gameObject.transform.parent = this.transform;
-        gameObject.transform.position = this.GetWorldspacePosition(slot.Position);
-        gameObject.transform.rotation = Quaternion.Euler(Vector3.up * 90f * module.Rotation);
-        slot.GameObject = gameObject;
-        this.cullingData.AddSlot(slot);
+        var obj = GameObject.Instantiate(module.prefab.gameObject);
+        
+        obj.name = module.prefab.gameObject.name + " " + cell.position;
+        GameObject.DestroyImmediate(obj.GetComponent<ModulePrefab>());
+        obj.transform.parent = this.transform;
+        obj.transform.SetPositionAndRotation(this.GetWorldPosition(cell.position),
+            Quaternion.Euler(90f * module.rotation * Vector3.up));
+        
+        cell.gameObject = obj;
+        this.cullingData.AddCell(cell);
         return true;
     }
 
-    public void BuildAllSlots()
+    public void BuildAllCells()
     {
-        while (this.Map.BuildQueue.Count != 0)
+        while (this.map.buildQueue.Count != 0)
         {
-            this.BuildSlot(this.Map.BuildQueue.Dequeue());
+            this.BuildCell(this.map.buildQueue.Dequeue());
         }
     }
-
-    public bool VisualizeSlots = false;
-
-#if UNITY_EDITOR
-    [DrawGizmo(GizmoType.InSelectionHierarchy | GizmoType.NotInSelectionHierarchy)]
-    static void DrawGizmo(MapBehaviour mapBehaviour, GizmoType gizmoType)
-    {
-        if (!mapBehaviour.VisualizeSlots)
-        {
-            return;
-        }
-        if (mapBehaviour.Map == null)
-        {
-            return;
-        }
-        foreach (var slot in mapBehaviour.Map.GetAllSlots())
-        {
-            if (slot.Collapsed || slot.Modules.Count == ModuleData.Current.Length)
-            {
-                continue;
-            }
-            Handles.Label(mapBehaviour.GetWorldspacePosition(slot.Position), slot.Modules.Count.ToString());
-        }
-    }
-#endif
 }

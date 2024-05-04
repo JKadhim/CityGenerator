@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public static class Extensions
+public static class Methods
 {
     //Converts a Vector3Int to a Vector3
     public static Vector3 ToVector3(this Vector3Int vector)
@@ -34,7 +34,7 @@ public static class Extensions
             }
             if (c++ > 10000)
             {
-                throw new Exception();
+                throw new System.Exception();
             }
         }
     }

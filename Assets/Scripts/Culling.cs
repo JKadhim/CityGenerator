@@ -7,12 +7,11 @@ using UnityEditor.Experimental.GraphView;
 
 [RequireComponent(typeof(MapBehaviour))]
 [RequireComponent(typeof(CullingData))]
-public class OcclusionCulling : MonoBehaviour
+public class Culling : MonoBehaviour
 {
-    public Camera Camera;
+    public Camera camera_;
 
     private CullingData cullingData;
-    private Plane[] cameraFrustumPlanes;
 
     public void OnEnable()
     {
@@ -21,29 +20,17 @@ public class OcclusionCulling : MonoBehaviour
 
     void Update()
     {
-        this.cameraFrustumPlanes = GeometryUtility.CalculateFrustumPlanes(this.Camera);
-        var cameraPosition = this.cullingData.MapBehaviour.GetMapPosition(this.Camera.transform.position);
-
-        bool cameraIsInsideRoom = this.cullingData.RoomsByPosition.ContainsKey(cameraPosition);
-        foreach (var chunk in this.cullingData.ChunksInRange)
+        foreach (var chunk in this.cullingData.chunksInRange)
         {
-            chunk.SetRoomVisibility(false);
-            chunk.SetExteriorVisibility(!cameraIsInsideRoom);
-        }
-
-        if (cameraIsInsideRoom)
-        {
-            var cameraRoom = this.cullingData.RoomsByPosition[cameraPosition];
-            cameraRoom.SetVisibility(true);
+            chunk.SetVisibility(true);
         }
     }
 
     void OnDisable()
     {
-        foreach (var chunk in this.cullingData.Chunks.Values)
+        foreach (var chunk in this.cullingData.chunks.Values)
         {
-            chunk.SetExteriorVisibility(true);
-            chunk.SetRoomVisibility(true);
+            chunk.SetVisibility(true);
         }
     }
 }

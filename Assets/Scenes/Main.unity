@@ -14,12 +14,12 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
-  m_Fog: 0
+  m_Fog: 1
   m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  m_FogMode: 3
-  m_FogDensity: 0.01
-  m_LinearFogStart: 0
-  m_LinearFogEnd: 300
+  m_FogMode: 1
+  m_FogDensity: 0.55
+  m_LinearFogStart: 20
+  m_LinearFogEnd: 200
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
@@ -94,7 +94,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 0}
+  m_LightingDataAsset: {fileID: 112000000, guid: 6499ae137438d444dbdbad86ed7f7dc5, type: 2}
   m_LightingSettings: {fileID: 0}
 --- !u!196 &4
 NavMeshSettings:
@@ -120,51 +120,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &362598901
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 362598902}
-  - component: {fileID: 362598903}
-  m_Layer: 0
-  m_Name: Area Selector
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &362598902
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 362598901}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &362598903
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 362598901}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 306f63055de87744ea4d1d824531aebb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  MapBehaviour: {fileID: 2130819218}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -473,8 +428,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37e23f5311106134f932bb6299a2c454, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Camera: {fileID: 963194227}
-  Range: 150
+  camera_: {fileID: 963194227}
+  range: 300
 --- !u!114 &2130819215
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -487,7 +442,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73e1a38cfd413be498a006dba6b246e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Camera: {fileID: 963194227}
+  camera_: {fileID: 963194227}
 --- !u!114 &2130819216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -500,9 +455,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79eb26ab47dc5b24291bc081a6f6ec32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MapBehaviour: {fileID: 0}
-  ChunkSize: 3
-  DrawGizmo: 1
+  mapBehaviour: {fileID: 0}
+  chunkSize: 4
 --- !u!114 &2130819217
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -515,9 +469,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4edbf463d32777d4cba3859e0e65829f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Target: {fileID: 754229050}
-  ChunkSize: 10
-  Range: 250
+  target: {fileID: 754229050}
+  chunkSize: 5
+  range: 400
 --- !u!114 &2130819218
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -530,19 +484,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e806912eaa8c96143a23ff025e4bea56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MapHeight: 6
-  BoundaryConstraints:
-  - RelativeY: 0
-    Direction: 1
-    Mode: 0
-    Connector: 1
-  - RelativeY: -1
-    Direction: 0
-    Mode: 0
-    Connector: 0
-  ApplyBoundaryConstraints: 1
-  ModuleData: {fileID: 11400000, guid: 02927a3db5972974db3c4304577780bb, type: 2}
-  VisualizeSlots: 0
+  mapHeight: 6
+  constraints:
+  - yLocal: 0
+    direction: 1
+    mode: 0
+    connector: 1
+  - yLocal: 5
+    direction: 0
+    mode: 0
+    connector: 0
+  applyConstraints: 1
+  moduleData: {fileID: 11400000, guid: 02927a3db5972974db3c4304577780bb, type: 2}
 --- !u!4 &2130819219
 Transform:
   m_ObjectHideFlags: 0
@@ -564,5 +517,4 @@ SceneRoots:
   m_Roots:
   - {fileID: 705507995}
   - {fileID: 2130819219}
-  - {fileID: 362598902}
   - {fileID: 754229050}

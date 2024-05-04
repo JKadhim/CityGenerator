@@ -1,11 +1,11 @@
 using System;
 
-public class CollapseFailedException : Exception
+public class Exception : System.Exception
 {
-    public readonly Slot slot;
+    public readonly Cell cell;
 
-    public CollapseFailedException(Slot slot)
+    public Exception(Cell cell)
     {
-        this.slot = slot;
+        this.cell = cell;
     }
 }

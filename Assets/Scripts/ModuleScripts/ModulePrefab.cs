@@ -5,75 +5,73 @@ using UnityEngine;
 using System.Linq;
 using System;
 
-public class ModulePrototype : MonoBehaviour
+public class ModulePrefab : MonoBehaviour
 {
     [System.Serializable]
     public abstract class FaceDetails
     {
-        public bool Walkable;
-
-        public int Connector;
+        public bool walkable;
+        public int connector;
 
         public virtual void ResetConnector()
         {
-            this.Connector = 0;
+            this.connector = 0;
         }
 
-        public ModulePrototype[] ExcludedNeighbours;
+        public ModulePrefab[] excludedNeighbours;
 
-        public bool EnforceWalkableNeighbor = false;
-
-        public bool IsOcclusionPortal = false;
+        public bool enforceWalkableNeighbor = false;
     }
 
     [System.Serializable]
-    public class HorizontalFaceDetails : FaceDetails
+    public class Horizontal : FaceDetails
     {
-        public bool Symmetric;
-        public bool Flipped;
+        public bool symmetric;
+        public bool flipped;
 
         public override string ToString()
         {
-            return this.Connector.ToString() + (this.Symmetric ? "s" : (this.Flipped ? "F" : ""));
+            var temp = this.flipped ? "F" : "";
+            return this.connector.ToString() + (this.symmetric ? "S" : (temp));
         }
 
         public override void ResetConnector()
         {
             base.ResetConnector();
-            this.Symmetric = false;
-            this.Flipped = false;
+            this.symmetric = false;
+            this.flipped = false;
         }
     }
 
     [System.Serializable]
-    public class VerticalFaceDetails : FaceDetails
+    public class Vertical : FaceDetails
     {
-        public bool Invariant;
-        public int Rotation;
+        public bool @fixed;
+        public int rotation;
 
         public override string ToString()
         {
-            return this.Connector.ToString() + (this.Invariant ? "i" : (this.Rotation != 0 ? "_bcd".ElementAt(this.Rotation).ToString() : ""));
+            var temp = this.rotation != 0 ? "_BCD".ElementAt(this.rotation).ToString() : "";
+            return this.connector.ToString() + (this.@fixed ? "I" : temp);
         }
 
         public override void ResetConnector()
         {
             base.ResetConnector();
-            this.Invariant = false;
-            this.Rotation = 0;
+            this.@fixed = false;
+            this.rotation = 0;
         }
     }
 
-    public float Probability = 1.0f;
-    public bool Spawn = true;
-    public bool IsInterior = false;
+    public float probability = 1.0f;
+    public bool spawn = true;
 
-    public HorizontalFaceDetails Left;
-    public VerticalFaceDetails Down;
-    public HorizontalFaceDetails Back;
-    public HorizontalFaceDetails Right;
-    public VerticalFaceDetails Up;
-    public HorizontalFaceDetails Forward;
+    public Horizontal Left;
+    public Vertical Down;
+    public Horizontal Back;
+    public Horizontal Right;
+    public Vertical Up;
+    public Horizontal Forward;
 
     public FaceDetails[] Faces
     {
@@ -90,14 +88,14 @@ public class ModulePrototype : MonoBehaviour
         }
     }
 
-    public Mesh GetMesh(bool createEmptyFallbackMesh = true)
+    public Mesh GetMesh(bool createFallback = true)
     {
-        var meshFilter = this.GetComponent<MeshFilter>();
-        if (meshFilter != null && meshFilter.sharedMesh != null)
+        var filter = this.GetComponent<MeshFilter>();
+        if (filter != null && filter.sharedMesh != null)
         {
-            return meshFilter.sharedMesh;
+            return filter.sharedMesh;
         }
-        if (createEmptyFallbackMesh)
+        if (createFallback)
         {
             var mesh = new Mesh();
             return mesh;
@@ -106,19 +104,19 @@ public class ModulePrototype : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    private static ModulePrototypeEditorData editorData;
+    private static PrefabEditorData editorData;
     private static GUIStyle style;
 
     [DrawGizmo(GizmoType.InSelectionHierarchy | GizmoType.NotInSelectionHierarchy)]
-    static void DrawGizmo(ModulePrototype modulePrototype, GizmoType gizmoType)
+    static void DrawGizmo(ModulePrefab modulePrefab, GizmoType gizmoType)
     {
-        var transform = modulePrototype.transform;
+        var transform = modulePrefab.transform;
         Vector3 position = transform.position;
         var rotation = transform.rotation;
 
-        if (ModulePrototype.editorData == null || ModulePrototype.editorData.ModulePrototype != modulePrototype)
+        if (ModulePrefab.editorData == null || ModulePrefab.editorData.ModulePrefab != modulePrefab)
         {
-            ModulePrototype.editorData = new ModulePrototypeEditorData(modulePrototype);
+            ModulePrefab.editorData = new PrefabEditorData(modulePrefab);
         }
 
         Gizmos.color = new Color(1f, 1f, 1f, 0.3f);
@@ -126,64 +124,56 @@ public class ModulePrototype : MonoBehaviour
         {
             for (int i = 0; i < 6; i++)
             {
-                var hint = ModulePrototype.editorData.GetConnectorHint(i);
-                if (hint.Mesh != null)
+                var hint = ModulePrefab.editorData.GetConnectorHint(i);
+                if (hint.mesh != null)
                 {
-                    Gizmos.DrawMesh(hint.Mesh,
-                        position + rotation * Orientations.Direction[i].ToVector3() * AbstractMap.BLOCK_SIZE,
-                        rotation * Quaternion.Euler(Vector3.up * 90f * hint.Rotation));
+                    Gizmos.DrawMesh(hint.mesh,
+                        position + rotation * Directions.Direction[i].ToVector3() * MapBase.BLOCK_SIZE,
+                        rotation * Quaternion.Euler(90f * hint.rotation * Vector3.up));
                 }
             }
         }
         for (int i = 0; i < 6; i++)
         {
-            if (modulePrototype.Faces[i].Walkable)
+            if (modulePrefab.Faces[i].walkable)
             {
                 Gizmos.color = Color.red;
-                Gizmos.DrawLine(position + Vector3.down * 0.1f, position + rotation * Orientations.Rotations[i] * Vector3.forward * AbstractMap.BLOCK_SIZE * 0.5f + Vector3.down * 0.1f);
+                Gizmos.DrawLine(position + Vector3.down * 0.1f, position + rotation * Directions.Rotations[i] * Vector3.forward * MapBase.BLOCK_SIZE * 0.5f + Vector3.down * 0.1f);
             }
-            if (modulePrototype.Faces[i].IsOcclusionPortal)
+        }
+
+        ModulePrefab.style ??= new GUIStyle
             {
-                Gizmos.color = Color.blue;
+                alignment = TextAnchor.MiddleCenter
+            };
 
-                var dir = rotation * Orientations.Rotations[i] * Vector3.forward;
-                Gizmos.DrawWireCube(position + dir, (Vector3.one - new Vector3(Mathf.Abs(dir.x), Mathf.Abs(dir.y), Mathf.Abs(dir.z))) * AbstractMap.BLOCK_SIZE);
-            }
-        }
-
-        if (ModulePrototype.style == null)
-        {
-            ModulePrototype.style = new GUIStyle();
-            ModulePrototype.style.alignment = TextAnchor.MiddleCenter;
-        }
-
-        ModulePrototype.style.normal.textColor = Color.black;
+        ModulePrefab.style.normal.textColor = Color.black;
         for (int i = 0; i < 6; i++)
         {
-            var face = modulePrototype.Faces[i];
-            Handles.Label(position + rotation * Orientations.Rotations[i] * Vector3.forward * InfiniteMap.BLOCK_SIZE / 2f, face.ToString(), ModulePrototype.style);
+            var face = modulePrefab.Faces[i];
+            Handles.Label(position + rotation * Directions.Rotations[i] * Vector3.forward * InfiniteMap.BLOCK_SIZE / 2f, face.ToString(), ModulePrefab.style);
         }
     }
 #endif
 
-    public bool CompareRotatedVariants(int r1, int r2)
+    public bool CompareRotated(int r1, int r2)
     {
-        if (!(this.Faces[Orientations.UP] as VerticalFaceDetails).Invariant || !(this.Faces[Orientations.DOWN] as VerticalFaceDetails).Invariant)
+        if (!(this.Faces[Directions.UP] as Vertical).@fixed || !(this.Faces[Directions.DOWN] as Vertical).@fixed)
         {
             return false;
         }
 
         for (int i = 0; i < 4; i++)
         {
-            var face1 = this.Faces[Orientations.Rotate(Orientations.HorizontalDirections[i], r1)] as HorizontalFaceDetails;
-            var face2 = this.Faces[Orientations.Rotate(Orientations.HorizontalDirections[i], r2)] as HorizontalFaceDetails;
+            var face1 = this.Faces[Directions.Rotate(Directions.horizontal[i], r1)] as Horizontal;
+            var face2 = this.Faces[Directions.Rotate(Directions.horizontal[i], r2)] as Horizontal;
 
-            if (face1.Connector != face2.Connector)
+            if (face1.connector != face2.connector)
             {
                 return false;
             }
 
-            if (!face1.Symmetric && !face2.Symmetric && face1.Flipped != face2.Flipped)
+            if (!face1.symmetric && !face2.symmetric && face1.flipped != face2.flipped)
             {
                 return false;
             }
@@ -192,20 +182,18 @@ public class ModulePrototype : MonoBehaviour
         return true;
     }
 
-    void Update() { }
-
     void Reset()
     {
-        this.Up = new VerticalFaceDetails();
-        this.Down = new VerticalFaceDetails();
-        this.Right = new HorizontalFaceDetails();
-        this.Left = new HorizontalFaceDetails();
-        this.Forward = new HorizontalFaceDetails();
-        this.Back = new HorizontalFaceDetails();
+        this.Up = new Vertical();
+        this.Down = new Vertical();
+        this.Right = new Horizontal();
+        this.Left = new Horizontal();
+        this.Forward = new Horizontal();
+        this.Back = new Horizontal();
 
         foreach (var face in this.Faces)
         {
-            face.ExcludedNeighbours = new ModulePrototype[] { };
+            face.excludedNeighbours = new ModulePrefab[] { };
         }
     }
 }

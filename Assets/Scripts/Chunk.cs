@@ -5,15 +5,15 @@ using UnityEngine;
 
 public class Chunk
 {
-    public readonly Bounds Bounds;
+    public readonly Bounds bounds;
 
-    public List<Renderer> Renderers;
-    public List<GameObject> GameObjects;
-    public List<Room> Rooms;
+    public List<Renderer> renderers;
+    public List<GameObject> gameObjects;
 
-    private Dictionary<Vector3Int, Renderer[]> renderersByPosition;
+    public bool cellsVisible = true;
 
-    public bool ExteriorBlocksVisible = true;
+    private readonly Dictionary<Vector3Int, Renderer[]> renderersByLocation;
+
     public bool InRenderRange
     {
         get;
@@ -22,80 +22,63 @@ public class Chunk
 
     public Chunk(Bounds bounds)
     {
-        this.Bounds = bounds;
-        this.Renderers = new List<Renderer>();
-        this.Rooms = new List<Room>();
-        this.renderersByPosition = new Dictionary<Vector3Int, Renderer[]>();
-        this.GameObjects = new List<GameObject>();
+        this.bounds = bounds;
+        this.renderers = new List<Renderer>();
+        this.renderersByLocation = new Dictionary<Vector3Int, Renderer[]>();
+        this.gameObjects = new List<GameObject>();
         this.InRenderRange = true;
     }
 
-    public void SetInRenderRange(bool value)
+    public void SetInRange(bool value)
     {
         this.InRenderRange = value;
-        foreach (var gameObject in this.GameObjects)
+        foreach (var gameObject in this.gameObjects)
         {
             gameObject.SetActive(value);
         }
-        // This only works for small rooms.
-        // It will fail if a room has blocks outside the render range and close to the player. 
-        foreach (var room in this.Rooms)
-        {
-            foreach (var slot in room.Slots)
-            {
-                slot.GameObject.SetActive(value);
-            }
-        }
     }
 
-    public void SetExteriorVisibility(bool value)
+    public void SetVisibility(bool value)
     {
-        if (this.ExteriorBlocksVisible == value)
+        if (this.cellsVisible == value)
         {
             return;
         }
-        foreach (var renderer in this.Renderers)
+        
+        foreach (var renderer in this.renderers)
         {
             renderer.shadowCastingMode = value ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
         }
-        this.ExteriorBlocksVisible = value;
+        this.cellsVisible = value;
     }
 
-    public void SetRoomVisibility(bool value)
+    public void AddBlock(Cell cell)
     {
-        foreach (var room in this.Rooms)
+        if (this.renderersByLocation.ContainsKey(cell.position))
         {
-            room.SetVisibility(value);
-        }
-    }
-
-    public void AddBlock(Slot slot)
-    {
-        if (this.renderersByPosition.ContainsKey(slot.Position))
-        {
-            foreach (var renderer in this.renderersByPosition[slot.Position])
+            foreach (var renderer in this.renderersByLocation[cell.position])
             {
-                this.Renderers.Remove(renderer);
+                this.renderers.Remove(renderer);
             }
         }
-        var renderers = slot.GameObject.GetComponentsInChildren<Renderer>();
-        this.renderersByPosition[slot.Position] = renderers;
-        this.Renderers.AddRange(renderers);
-        this.ExteriorBlocksVisible = true;
-        this.GameObjects.Add(slot.GameObject);
-        slot.GameObject.SetActive(this.InRenderRange);
+        var renderersLocal = cell.gameObject.GetComponentsInChildren<Renderer>();
+        this.renderersByLocation[cell.position] = renderersLocal;
+        this.renderers.AddRange(renderersLocal);
+        this.cellsVisible = true;
+        this.gameObjects.Add(cell.gameObject);
+        cell.gameObject.SetActive(this.InRenderRange);
     }
 
-    public void RemoveBlock(Slot slot)
+    public void RemoveBlock(Cell cell)
     {
-        if (!this.renderersByPosition.ContainsKey(slot.Position))
+        if (!this.renderersByLocation.ContainsKey(cell.position))
         {
             return;
         }
-        foreach (var renderer in this.renderersByPosition[slot.Position])
+        foreach (var renderer in this.renderersByLocation[cell.position])
         {
-            this.Renderers.Remove(renderer);
+            this.renderers.Remove(renderer);
         }
-        this.GameObjects.Remove(slot.GameObject);
+        this.gameObjects.Remove(cell.gameObject);
     }
 }

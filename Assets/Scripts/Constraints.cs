@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class BoundaryConstraint
+public class Constraints
 {
     public enum ConstraintMode
     {
@@ -18,8 +18,8 @@ public class BoundaryConstraint
         Horizontal
     }
 
-    public int RelativeY = 0;
-    public ConstraintDirection Direction;
-    public ConstraintMode Mode;
-    public int Connector;
+    public int yLocal = 0;
+    public ConstraintDirection direction;
+    public ConstraintMode mode;
+    public int connector;
 }

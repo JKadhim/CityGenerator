@@ -9,82 +9,82 @@ public class DistanceCulling : MonoBehaviour
 
     private CullingData cullingData;
 
-    public Camera Camera;
+    public Camera camera_;
 
-    public float Range = 40;
+    public float range = 40;
 
     private Vector3Int chunkAddress;
 
     public void OnEnable()
     {
         this.cullingData = this.GetComponent<CullingData>();
-        if (this.cullingData.ChunksInRange != null)
+        if (this.cullingData.chunksInRange != null)
         {
-            this.chunkAddress = this.cullingData.GetChunkAddress(this.cullingData.MapBehaviour.GetMapPosition(this.Camera.transform.position));
+            this.chunkAddress = this.cullingData.GetChunkAddress(this.cullingData.mapBehaviour.GetMapPosition(this.camera_.transform.position));
             this.UpdateChunks();
         }
     }
 
     public void OnDisable()
     {
-        this.cullingData.ChunksInRange = this.cullingData.Chunks.Values.ToList();
-        foreach (var chunk in this.cullingData.ChunksInRange)
+        this.cullingData.chunksInRange = this.cullingData.chunks.Values.ToList();
+        foreach (var chunk in this.cullingData.chunksInRange)
         {
-            chunk.SetInRenderRange(true);
+            chunk.SetInRange(true);
         }
     }
 
     void Update()
     {
-        var newChunkAddress = this.cullingData.GetChunkAddress(this.cullingData.MapBehaviour.GetMapPosition(this.Camera.transform.position));
-        if (newChunkAddress == this.chunkAddress)
+        var address = this.cullingData.GetChunkAddress(this.cullingData.mapBehaviour.GetMapPosition(this.camera_.transform.position));
+        if (address == this.chunkAddress)
         {
             return;
         }
-        this.chunkAddress = newChunkAddress;
+        this.chunkAddress = address;
         this.UpdateChunks();
     }
 
-    float getHorizontalDistance(Vector3 a, Vector3 b)
+    float GetDistance(Vector3 a, Vector3 b)
     {
         return Mathf.Sqrt(Mathf.Pow(a.x - b.x, 2) + Mathf.Pow(a.z - b.z, 2));
     }
 
     void UpdateChunks()
     {
-        var chunksInRange = this.cullingData.ChunksInRange;
+        var chunksInRange = this.cullingData.chunksInRange;
         for (int i = 0; i < chunksInRange.Count; i++)
         {
-            if (getHorizontalDistance(chunksInRange[i].Bounds.center, this.Camera.transform.position) > this.Range)
+            if (GetDistance(chunksInRange[i].bounds.center, this.camera_.transform.position) > this.range)
             {
-                chunksInRange[i].SetInRenderRange(false);
+                chunksInRange[i].SetInRange(false);
                 chunksInRange.RemoveAt(i);
                 i--;
             }
         }
 
-        int chunkCount = (int)(this.Range / (AbstractMap.BLOCK_SIZE * this.cullingData.ChunkSize));
+        int chunkCount = (int)(this.range / (MapBase.BLOCK_SIZE * this.cullingData.chunkSize));
         for (int x = this.chunkAddress.x - chunkCount; x <= this.chunkAddress.x + chunkCount; x++)
         {
-            for (int y = 0; y < Mathf.CeilToInt((float)this.cullingData.MapBehaviour.MapHeight / this.cullingData.ChunkSize); y++)
+            for (int y = 0; y < Mathf.CeilToInt((float)this.cullingData.mapBehaviour.mapHeight / this.cullingData.chunkSize); y++)
             {
                 for (int z = this.chunkAddress.z - chunkCount; z <= this.chunkAddress.z + chunkCount; z++)
                 {
                     var address = new Vector3Int(x, y, z);
-                    if (Vector3.Distance(this.Camera.transform.position, this.cullingData.GetChunkCenter(address)) > this.Range)
+                    if (Vector3.Distance(this.camera_.transform.position, this.cullingData.GetChunkCenter(address)) > this.range)
                     {
                         continue;
                     }
-                    if (!this.cullingData.Chunks.ContainsKey(address))
+                    if (!this.cullingData.chunks.ContainsKey(address))
                     {
                         continue;
                     }
-                    var chunk = this.cullingData.Chunks[address];
+                    var chunk = this.cullingData.chunks[address];
                     if (chunk.InRenderRange)
                     {
                         continue;
                     }
-                    chunk.SetInRenderRange(true);
+                    chunk.SetInRange(true);
                     chunksInRange.Add(chunk);
                 }
             }

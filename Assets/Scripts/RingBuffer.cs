@@ -5,9 +5,9 @@ using UnityEngine;
 
 public class RingBuffer<T>
 {
-    public readonly int Size;
+    public readonly int size;
 
-    public Action<T> OnOverflow;
+    public Action<T> onOverflow;
 
     public int Count
     {
@@ -22,12 +22,12 @@ public class RingBuffer<T>
         private set;
     }
 
-    private T[] buffer;
+    private readonly T[] buffer;
     private int position;
 
     public RingBuffer(int size)
     {
-        this.Size = size;
+        this.size = size;
         this.buffer = new T[size];
         this.Count = 0;
         this.position = 0;
@@ -35,16 +35,16 @@ public class RingBuffer<T>
 
     public void Push(T item)
     {
-        this.position = (this.position + 1) % this.Size;
-        if (this.buffer[this.position] != null && this.OnOverflow != null)
+        this.position = (this.position + 1) % this.size;
+        if (!object.Equals(this.buffer[this.position], default(T)) && this.onOverflow != null)
         {
-            this.OnOverflow(this.buffer[this.position]);
+            this.onOverflow(this.buffer[this.position]);
         }
         this.buffer[this.position] = item;
         this.Count++;
-        if (this.Count > this.Size)
+        if (this.Count > this.size)
         {
-            this.Count = this.Size;
+            this.Count = this.size;
         }
         this.TotalCount++;
     }
@@ -65,9 +65,9 @@ public class RingBuffer<T>
             throw new System.InvalidOperationException();
         }
         T result = this.buffer[this.position];
-        this.buffer[this.position] = default(T);
+        this.buffer[this.position] = default;
 
-        this.position = (this.position + this.Size - 1) % this.Size;
+        this.position = (this.position + this.size - 1) % this.size;
         this.Count--;
         this.TotalCount--;
 

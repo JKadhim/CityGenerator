@@ -5,34 +5,15 @@ using UnityEngine;
 
 public class QueueDictionary<TKey, TValue>
 {
-    private Queue<TKey> queue;
-    private Dictionary<TKey, TValue> dict;
-
-    private Func<TValue> generator;
+    private readonly Queue<TKey> queue;
+    private readonly Dictionary<TKey, TValue> dict;
+    private readonly Func<TValue> generator;
 
     public QueueDictionary(Func<TValue> generator)
     {
         this.generator = generator;
         this.queue = new Queue<TKey>();
         this.dict = new Dictionary<TKey, TValue>();
-    }
-
-    public KeyValuePair<TKey, TValue> Peek()
-    {
-        return new KeyValuePair<TKey, TValue>(this.queue.Peek(), this.dict[this.queue.Peek()]);
-    }
-
-    public KeyValuePair<TKey, TValue> Dequeue()
-    {
-        var key = this.queue.Dequeue();
-        var result = new KeyValuePair<TKey, TValue>(key, this.dict[key]);
-        this.dict.Remove(key);
-        return result;
-    }
-
-    public bool Any()
-    {
-        return this.queue.Count != 0;
     }
 
     public TValue this[TKey key]
@@ -54,6 +35,24 @@ public class QueueDictionary<TKey, TValue>
             }
             this.dict[key] = value;
         }
+    }
+
+    public KeyValuePair<TKey, TValue> Peek()
+    {
+        return new KeyValuePair<TKey, TValue>(this.queue.Peek(), this.dict[this.queue.Peek()]);
+    }
+
+    public KeyValuePair<TKey, TValue> Dequeue()
+    {
+        var key = this.queue.Dequeue();
+        var result = new KeyValuePair<TKey, TValue>(key, this.dict[key]);
+        this.dict.Remove(key);
+        return result;
+    }
+
+    public bool Any()
+    {
+        return this.queue.Count != 0;
     }
 
     public void Clear()

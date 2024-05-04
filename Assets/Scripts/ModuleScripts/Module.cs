@@ -8,71 +8,71 @@ using UnityEditor;
 [System.Serializable]
 public class Module
 {
-    public string Name;
+    public string name;
 
-    public ModulePrototype Prototype;
-    public GameObject Prefab;
+    public ModulePrefab prefab;
+    public GameObject prefabObject;
 
-    public int Rotation;
+    public int rotation;
 
-    public ModuleSet[] PossibleNeighbors;
-    public Module[][] PossibleNeighborsArray;
+    public ModuleSet[] possibleNeighbours;
+    public Module[][] possibleNeighboursArray;
 
     [HideInInspector]
-    public int Index;
+    public int index;
 
     // This is precomputed to make entropy calculation faster
-    public float PLogP;
+    public float log;
 
     public Module(GameObject prefab, int rotation, int index)
     {
-        this.Rotation = rotation;
-        this.Index = index;
-        this.Prefab = prefab;
-        this.Prototype = this.Prefab.GetComponent<ModulePrototype>();
-        this.Name = this.Prototype.gameObject.name + " R" + rotation;
-        this.PLogP = this.Prototype.Probability * Mathf.Log(this.Prototype.Probability);
+        this.rotation = rotation;
+        this.index = index;
+        this.prefabObject = prefab;
+        this.prefab = this.prefabObject.GetComponent<ModulePrefab>();
+        this.name = this.prefab.gameObject.name + " R" + rotation;
+        this.log = this.prefab.probability * Mathf.Log(this.prefab.probability);
     }
 
     public bool Fits(int direction, Module module)
     {
-        int otherDirection = (direction + 3) % 6;
+        int oppositeDirection = (direction + 3) % 6;
 
-        if (Orientations.IsHorizontal(direction))
+        if (Directions.IsHorizontal(direction))
         {
-            var f1 = this.Prototype.Faces[Orientations.Rotate(direction, this.Rotation)] as ModulePrototype.HorizontalFaceDetails;
-            var f2 = module.Prototype.Faces[Orientations.Rotate(otherDirection, module.Rotation)] as ModulePrototype.HorizontalFaceDetails;
-            return f1.Connector == f2.Connector && (f1.Symmetric || f1.Flipped != f2.Flipped);
+            var face1 = this.prefab.Faces[Directions.Rotate(direction, this.rotation)] as ModulePrefab.Horizontal;
+            var face2 = module.prefab.Faces[Directions.Rotate(oppositeDirection, module.rotation)] as ModulePrefab.Horizontal;
+            return face1.connector == face2.connector && (face1.symmetric || face1.flipped != face2.flipped);
         }
         else
         {
-            var f1 = this.Prototype.Faces[direction] as ModulePrototype.VerticalFaceDetails;
-            var f2 = module.Prototype.Faces[otherDirection] as ModulePrototype.VerticalFaceDetails;
-            return f1.Connector == f2.Connector && (f1.Invariant || (f1.Rotation + this.Rotation) % 4 == (f2.Rotation + module.Rotation) % 4);
+            var face1 = this.prefab.Faces[direction] as ModulePrefab.Vertical;
+            var face2 = module.prefab.Faces[oppositeDirection] as ModulePrefab.Vertical;
+            return face1.connector == face2.connector && (face1.@fixed || (face1.rotation + this.rotation) % 4 == (face2.rotation + module.rotation) % 4);
         }
     }
 
     public bool Fits(int direction, int connector)
     {
-        if (Orientations.IsHorizontal(direction))
+        if (Directions.IsHorizontal(direction))
         {
-            var f = this.GetFace(direction) as ModulePrototype.HorizontalFaceDetails;
-            return f.Connector == connector;
+            var face = this.GetFace(direction) as ModulePrefab.Horizontal;
+            return face.connector == connector;
         }
         else
         {
-            var f = this.Prototype.Faces[direction] as ModulePrototype.VerticalFaceDetails;
-            return f.Connector == connector;
+            var face = this.prefab.Faces[direction] as ModulePrefab.Vertical;
+            return face.connector == connector;
         }
     }
 
-    public ModulePrototype.FaceDetails GetFace(int direction)
+    public ModulePrefab.FaceDetails GetFace(int direction)
     {
-        return this.Prototype.Faces[Orientations.Rotate(direction, this.Rotation)];
+        return this.prefab.Faces[Directions.Rotate(direction, this.rotation)];
     }
 
     public override string ToString()
     {
-        return this.Name;
+        return this.name;
     }
 }

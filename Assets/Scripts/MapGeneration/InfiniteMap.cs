@@ -5,115 +5,120 @@ using System.Linq;
 using System;
 using UnityEditor;
 
-public class InfiniteMap : AbstractMap
+public class InfiniteMap : MapBase
 {
-    private Dictionary<Vector3Int, Slot> slots;
+    private readonly Dictionary<Vector3Int, Cell> cells;
 
-    public readonly int Height;
+    public readonly int height;
 
-    public Vector3Int rangeLimitCenter;
-    public int RangeLimit = 80;
+    public Vector3Int rangeLimitCentre;
+    public int rangeLimit = 80;
 
-    private TilingMap defaultColumn;
+    private readonly TileMap defaultMap;
 
     public InfiniteMap(int height) : base()
     {
-        this.Height = height;
-        this.slots = new Dictionary<Vector3Int, Slot>();
-        this.defaultColumn = new TilingMap(new Vector3Int(1, height, 1));
+        this.height = height;
+        this.cells = new Dictionary<Vector3Int, Cell>();
+        this.defaultMap = new TileMap(new Vector3Int(1, height, 1));
 
-        if (ModuleData.Current == null || ModuleData.Current.Length == 0)
+        if (ModuleData.current == null || ModuleData.current.Length == 0)
         {
-            throw new InvalidOperationException("Module data was not available, please create module data first.");
+            throw new InvalidOperationException("Module doesn't exist");
         }
     }
 
-    public override Slot GetSlot(Vector3Int position)
+    public override Cell GetCell(Vector3Int position)
     {
-        if (position.y >= this.Height || position.y < 0)
+        if (position.y >= this.height || position.y < 0)
         {
             return null;
         }
 
-        if (this.slots.ContainsKey(position))
+        if (this.cells.ContainsKey(position))
         {
-            return this.slots[position];
+            return this.cells[position];
         }
 
-        if (this.IsOutsideOfRangeLimit(position))
+        if (this.IsOutOfRange(position))
         {
             return null;
         }
 
-        this.slots[position] = new Slot(position, this, this.defaultColumn.GetSlot(position));
-        return this.slots[position];
+        this.cells[position] = new Cell(position, this, this.defaultMap.GetCell(position));
+        return this.cells[position];
     }
 
-    public bool IsOutsideOfRangeLimit(Vector3Int position)
+    public bool IsOutOfRange(Vector3Int position)
     {
-        return (position - this.rangeLimitCenter).magnitude > this.RangeLimit;
+        return (position - this.rangeLimitCentre).magnitude > this.rangeLimit;
     }
 
-    public override void ApplyBoundaryConstraints(IEnumerable<BoundaryConstraint> constraints)
+    public override void ApplyConstraints(IEnumerable<Constraints> constraints)
     {
         foreach (var constraint in constraints)
         {
-            int y = constraint.RelativeY;
+            int y = constraint.yLocal;
             if (y < 0)
             {
-                y += this.Height;
+                y += this.height;
             }
             int[] directions = null;
-            switch (constraint.Direction)
+            switch (constraint.direction)
             {
-                case BoundaryConstraint.ConstraintDirection.Up:
-                    directions = new int[] { 4 }; break;
-                case BoundaryConstraint.ConstraintDirection.Down:
-                    directions = new int[] { 1 }; break;
-                case BoundaryConstraint.ConstraintDirection.Horizontal:
-                    directions = Orientations.HorizontalDirections; break;
+                case Constraints.ConstraintDirection.Up:
+                    directions = new int[] { 4 };
+                    break;
+                
+                case Constraints.ConstraintDirection.Down:
+                    directions = new int[] { 1 };
+                    break;
+                
+                case Constraints.ConstraintDirection.Horizontal:
+                    directions = Directions.horizontal;
+                    break;
             }
 
-            foreach (int d in directions)
+            foreach (int dir in directions)
             {
-                switch (constraint.Mode)
+                switch (constraint.mode)
                 {
-                    case BoundaryConstraint.ConstraintMode.EnforceConnector:
-                        this.defaultColumn.GetSlot(new Vector3Int(0, y, 0)).EnforceConnector(d, constraint.Connector);
+                    case Constraints.ConstraintMode.EnforceConnector:
+                        this.defaultMap.GetCell(new Vector3Int(0, y, 0)).EnforceConnector(dir, constraint.connector);
                         break;
-                    case BoundaryConstraint.ConstraintMode.ExcludeConnector:
-                        this.defaultColumn.GetSlot(new Vector3Int(0, y, 0)).ExcludeConnector(d, constraint.Connector);
+                    case Constraints.ConstraintMode.ExcludeConnector:
+                        this.defaultMap.GetCell(new Vector3Int(0, y, 0)).ExcludeConnector(dir, constraint.connector);
                         break;
                 }
             }
         }
     }
 
-    public override IEnumerable<Slot> GetAllSlots()
+    public override IEnumerable<Cell> GetAllCells()
     {
-        return this.slots.Values;
+        return this.cells.Values;
     }
 
-    public Slot GetDefaultSlot(int y)
+    public Cell GetDefaultCell(int y)
     {
-        return this.defaultColumn.GetSlot(Vector3Int.up * y);
+        return this.defaultMap.GetCell(Vector3Int.up * y);
     }
 
-    public bool IsSlotInitialized(Vector3Int position)
+    public bool IsCellInitialized(Vector3Int position)
     {
-        return this.slots.ContainsKey(position);
+        return this.cells.ContainsKey(position);
     }
 
     private bool muteRangeLimitWarning = false;
 
     public void OnHitRangeLimit(Vector3Int position, ModuleSet modulesToRemove)
     {
-        if (this.muteRangeLimitWarning || position.y < 0 || position.y >= this.Height)
+        if (this.muteRangeLimitWarning || position.y < 0 || position.y >= this.height)
         {
             return;
         }
 
-        var moduleNames = modulesToRemove.Select(module => module.Name);
+        var moduleNames = modulesToRemove.Select(module => module.name);
         Debug.LogWarning("Hit range limit at " + position + ". Module(s) to be removed:\n" + string.Join("\n", moduleNames.ToArray()) + "\n");
         this.muteRangeLimitWarning = true;
     }

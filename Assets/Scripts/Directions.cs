@@ -4,7 +4,7 @@ using UnityEngine;
 using System.Linq;
 using System;
 
-public class Orientations
+public static class Directions
 {
     public const int LEFT = 0;
     public const int DOWN = 1;
@@ -21,11 +21,11 @@ public class Orientations
     {
         get
         {
-            if (Orientations.rotations == null)
+            if (Directions.rotations == null)
             {
-                Orientations.initialize();
+                Directions.Initialize();
             }
-            return Orientations.rotations;
+            return Directions.rotations;
         }
     }
 
@@ -33,17 +33,17 @@ public class Orientations
     {
         get
         {
-            if (Orientations.directions == null)
+            if (Directions.directions == null)
             {
-                Orientations.initialize();
+                Directions.Initialize();
             }
-            return Orientations.directions;
+            return Directions.directions;
         }
     }
 
-    private static void initialize()
+    private static void Initialize()
     {
-        Orientations.vectors = new Vector3[] {
+        Directions.vectors = new Vector3[] {
             Vector3.left,
             Vector3.down,
             Vector3.back,
@@ -52,13 +52,11 @@ public class Orientations
             Vector3.forward
         };
 
-        Orientations.rotations = Orientations.vectors.Select(vector => Quaternion.LookRotation(vector)).ToArray();
-        Orientations.directions = Orientations.vectors.Select(vector => Vector3Int.RoundToInt(vector)).ToArray();
+        Directions.rotations = Directions.vectors.Select(vector => Quaternion.LookRotation(vector)).ToArray();
+        Directions.directions = Directions.vectors.Select(vector => Vector3Int.RoundToInt(vector)).ToArray();
     }
 
-    public static readonly int[] HorizontalDirections = { 0, 2, 3, 5 };
-
-    public static readonly string[] Names = { "-Red (Left)", "-Green (Down)", "-Blue (Back)", "+Red (Right)", "+Green (Up)", "+Blue (Forward)" };
+    public static readonly int[] horizontal = { 0, 2, 3, 5 };
 
     public static int Rotate(int direction, int amount)
     {
@@ -66,12 +64,12 @@ public class Orientations
         {
             return direction;
         }
-        return HorizontalDirections[(Array.IndexOf(HorizontalDirections, direction) + amount) % 4];
+        return horizontal[(Array.IndexOf(horizontal, direction) + amount) % 4];
     }
 
-    public static bool IsHorizontal(int orientation)
+    public static bool IsHorizontal(int direction)
     {
-        return orientation != 1 && orientation != 4;
+        return direction != 1 && direction != 4;
     }
 
     public static int GetIndex(Vector3 direction)
