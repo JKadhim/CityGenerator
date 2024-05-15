@@ -89,9 +89,12 @@ public class Cell
         float max = this.modules.Select(module => module.prefab.probability).Sum();
         float rand = (float)(InfiniteMap.random.NextDouble() * max);
         float probability = 0;
+        
+
         foreach (var candidate in this.modules)
-        {
+        {           
             probability += candidate.prefab.probability;
+
             if (probability >= rand)
             {
                 this.Collapse(candidate);

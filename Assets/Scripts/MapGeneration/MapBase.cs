@@ -7,7 +7,7 @@ using System;
 
 public abstract class MapBase
 {
-    public const float BLOCK_SIZE = 16f;
+    public const float BLOCK_SIZE = 8f;
     public const int HISTORY_SIZE = 10000;
 
     public static System.Random random;

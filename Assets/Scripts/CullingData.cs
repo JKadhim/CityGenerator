@@ -1,9 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
-using UnityEditor.Experimental.GraphView;
+using UnityEngine;
 
 public class CullingData : MonoBehaviour
 {
@@ -62,7 +59,7 @@ public class CullingData : MonoBehaviour
         }
         var chunk = this.GetChunkFromPosition(cell.position);
         chunk.AddBlock(cell);
-        
+
     }
 
     public void ClearOldCells()

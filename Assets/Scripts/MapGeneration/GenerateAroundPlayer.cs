@@ -40,6 +40,7 @@ public class GenerateAroundPlayer : MonoBehaviour
 
     private MapBehaviour mapBehaviour;
     private InfiniteMap map;
+    private CullingData cullingData;
 
     public Transform target;
 
@@ -61,6 +62,7 @@ public class GenerateAroundPlayer : MonoBehaviour
         this.generatedChunks = new HashSet<Vector3Int>();
         this.mapBehaviour = this.GetComponent<MapBehaviour>();
         this.mapBehaviour.Initialize();
+        this.cullingData = this.GetComponent<CullingData>();
         this.map = this.mapBehaviour.map;
         this.Generate();
         this.mapBehaviour.BuildAllCells();

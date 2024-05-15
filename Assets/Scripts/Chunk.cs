@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class Chunk
@@ -44,7 +42,7 @@ public class Chunk
         {
             return;
         }
-        
+
         foreach (var renderer in this.renderers)
         {
             renderer.shadowCastingMode = value ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;

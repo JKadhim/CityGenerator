@@ -3,7 +3,17 @@ guid: f9ac216f0eb04754b1d938aac6380b31
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - m_ManipulationInteractionGroup: {instanceID: 0}
+  - m_DirectInteractor: {instanceID: 0}
+  - m_RayInteractor: {instanceID: 0}
+  - m_TeleportInteractor: {instanceID: 0}
+  - m_TeleportModeActivate: {instanceID: 0}
+  - m_TeleportModeCancel: {instanceID: 0}
+  - m_Turn: {instanceID: 0}
+  - m_SnapTurn: {instanceID: 0}
+  - m_Move: {instanceID: 0}
+  - m_UIScroll: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
